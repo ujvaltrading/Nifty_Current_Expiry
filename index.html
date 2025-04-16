@@ -3,224 +3,100 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nifty 50 OI Live Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Nifty Live OI Dashboard</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0a0f1a;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
       color: white;
       margin: 0;
-      padding: 1rem;
+      padding: 0;
     }
-
-    h1 {
-      text-align: center;
-      color: #32ff7e;
-    }
-
-    #dataTable {
+    table {
       width: 100%;
-      overflow-x: auto;
       border-collapse: collapse;
       margin-top: 1rem;
     }
-
-    #dataTable th, #dataTable td {
-      border: 1px solid #444;
-      padding: 8px;
+    th, td {
+      padding: 10px;
+      border: 1px solid #334155;
       text-align: center;
     }
-
-    #dataTable th {
-      background-color: #111;
-      position: sticky;
-      top: 0;
-      z-index: 1;
+    th {
+      background: #1e293b;
+      color: #fff;
     }
-
-    .call {
-      background-color: rgba(0, 255, 0, 0.1);
-      color: #00ff00;
+    tr.call {
+      background-color: rgba(34,197,94,0.1); /* light green */
     }
-
-    .put {
-      background-color: rgba(255, 0, 0, 0.1);
-      color: #ff4d4d;
+    tr.put {
+      background-color: rgba(239,68,68,0.1); /* light red */
     }
-
     .trigger-call {
-      background-color: #00ff00;
+      background-color: #22c55e;
       color: black;
       font-weight: bold;
     }
-
     .trigger-put {
-      background-color: #ff4d4d;
+      background-color: #ef4444;
       color: black;
       font-weight: bold;
     }
-
-    #chartContainer {
-      margin-top: 2rem;
-      background: #111;
+    #status {
+      text-align: center;
       padding: 1rem;
-      border-radius: 10px;
-    }
-
-    button {
-      margin: 0.5rem;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 5px;
-      background-color: #444;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #888;
     }
   </style>
 </head>
 <body>
-  <h1>Nifty 50 OI Live Dashboard</h1>
-  <div id="tableContainer"></div>
-
-  <div id="chartContainer">
-    <h2>CALL vs PUT Comparison</h2>
-    <div>
-      <button onclick="renderChart('CALL OI', 'PUT OI')">OI</button>
-      <button onclick="renderChart('CALL OI Change', 'PUT OI Change')">OI Change</button>
-      <button onclick="renderChart('CALL Active Contracts', 'PUT Active Contracts')">Active Contracts</button>
-      <button onclick="renderChart('CALL Volume x LTP', 'PUT Volume x LTP')">Vol x LTP</button>
-      <button onclick="renderChart('CALL OI Base Vol', 'PUT OI Base Vol')">OI Base Vol</button>
-      <button onclick="renderChart('CALL Volume', 'PUT Volume')">Volume</button>
-    </div>
-    <canvas id="comparisonChart" width="400" height="150"></canvas>
-  </div>
+  <h1 style="text-align:center">📊 Nifty Live Options Dashboard</h1>
+  <div id="status">Loading live data...</div>
+  <div id="table-container"></div>
 
   <script>
-    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTWOYX3LIRi8DMElflq4ENzCF32gFfZcrGfOMUQUToRa_-DnrOHQiFEW4vtaj8fY4PxtH4M-dUMkAGc/pub?output=csv";
-    let globalData = [];
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWOYX3LIRi8DMElflq4ENzCF32gFfZcrGfOMUQUToRa_-DnrOHQiFEW4vtaj8fY4PxtH4M-dUMkAGc/pub?gid=1059790353&single=true&output=csv';
 
-    fetch(sheetURL)
-      .then(response => response.text())
-      .then(csv => {
-        const rows = csv.split("\n").map(r => r.split(","));
-        const headers = rows[0];
-        const dataRows = rows.slice(1).filter(row => row.length > 5 && !["SYMBOL", "NIFTY", ""].includes(row[0].trim()));
-        globalData = dataRows;
-        renderTable(headers, dataRows);
-      })
-      .catch(err => {
-        document.getElementById("tableContainer").innerHTML = "<p style='color:red;'>Failed to load data</p>";
-        console.error(err);
-      });
+    async function loadCSVData() {
+      try {
+        const res = await fetch(csvUrl);
+        if (!res.ok) throw new Error("Failed to load CSV");
 
-    function renderTable(headers, rows) {
-      const table = document.createElement("table");
-      table.id = "dataTable";
+        const text = await res.text();
+        const rows = text.trim().split('\n').map(row => row.split(','));
+        const container = document.getElementById('table-container');
+        const status = document.getElementById('status');
 
-      const thead = document.createElement("thead");
-      const trHead = document.createElement("tr");
-      headers.forEach(h => {
-        const th = document.createElement("th");
-        th.innerText = h;
-        trHead.appendChild(th);
-      });
-      thead.appendChild(trHead);
-      table.appendChild(thead);
+        // Remove unwanted rows like SYMBOL, STRIKE DIFF, etc.
+        const filteredRows = rows.filter(row => !(row[0] === "SYMBOL" || row[0] === "NIFTY" || row[0] === ""));
 
-      const tbody = document.createElement("tbody");
-      rows.forEach(row => {
-        const tr = document.createElement("tr");
+        // Build table
+        let html = "<table>";
+        filteredRows.forEach((row, idx) => {
+          html += "<tr class='" + (row.includes("CALL") ? "call" : row.includes("PUT") ? "put" : "") + "'>";
+          row.forEach((cell, colIdx) => {
+            const cellTag = idx === 0 ? "th" : "td";
+            const isTrigger = filteredRows[0][colIdx].toLowerCase().includes("trigger");
+            const className = isTrigger && cell.toLowerCase().includes("call")
+              ? "trigger-call"
+              : isTrigger && cell.toLowerCase().includes("put")
+              ? "trigger-put"
+              : "";
 
-        row.forEach((cell, i) => {
-          const td = document.createElement("td");
-          const text = cell.trim();
-
-          // Style based on content
-          if (headers[i].toLowerCase().includes("trigger")) {
-            td.className = text.toLowerCase().includes("call") ? "trigger-call" : "trigger-put";
-          } else if (headers[i].toLowerCase().includes("call")) {
-            td.classList.add("call");
-          } else if (headers[i].toLowerCase().includes("put")) {
-            td.classList.add("put");
-          }
-
-          td.innerText = text;
-          tr.appendChild(td);
+            html += `<${cellTag} class="${className}">${cell}</${cellTag}>`;
+          });
+          html += "</tr>";
         });
+        html += "</table>";
 
-        tbody.appendChild(tr);
-      });
-
-      table.appendChild(tbody);
-      document.getElementById("tableContainer").innerHTML = "";
-      document.getElementById("tableContainer").appendChild(table);
-    }
-
-    function renderChart(callColumn, putColumn) {
-      const ctx = document.getElementById("comparisonChart").getContext("2d");
-
-      const getColumnIndex = name => {
-        const header = globalData[0] || [];
-        return globalData[0].findIndex((val, idx) => val.includes(name));
-      };
-
-      const callIndex = getColumnIndex(callColumn);
-      const putIndex = getColumnIndex(putColumn);
-      const strikeIndex = 3; // Assuming Strike Price is at index 3
-
-      const strikes = globalData.map(row => row[strikeIndex]);
-      const callData = globalData.map(row => parseFloat(row[callIndex]) || 0);
-      const putData = globalData.map(row => parseFloat(row[putIndex]) || 0);
-
-      if (window.myChart) {
-        window.myChart.destroy();
+        container.innerHTML = html;
+        status.style.display = "none";
+      } catch (err) {
+        document.getElementById('status').innerText = "❌ Failed to load data.";
+        console.error(err);
       }
-
-      window.myChart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: strikes,
-          datasets: [
-            {
-              label: callColumn,
-              data: callData,
-              borderColor: "#00ff00",
-              backgroundColor: "rgba(0,255,0,0.2)",
-              fill: true
-            },
-            {
-              label: putColumn,
-              data: putData,
-              borderColor: "#ff4d4d",
-              backgroundColor: "rgba(255,0,0,0.2)",
-              fill: true
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            x: {
-              title: {
-                display: true,
-                text: "Strike Price"
-              }
-            },
-            y: {
-              title: {
-                display: true,
-                text: "Value"
-              }
-            }
-          }
-        }
-      });
     }
+
+    loadCSVData();
   </script>
 </body>
 </html>
