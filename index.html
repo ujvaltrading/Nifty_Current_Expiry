@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nifty Live Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    canvas {
+      background: #fff;
+      border-radius: 10px;
+      margin: 20px auto;
+      display: block;
+      max-width: 100%;
+    }
+    #table {
+      width: 100%;
+      overflow-x: auto;
+      background: #222;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: white;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+      border: 1px solid #444;
+    }
+    th {
+      background: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Nifty 50 Live Dashboard</h1>
+  
+  <canvas id="chart1" height="200"></canvas>
+  <div id="table"></div>
+
+  <script>
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTWOYX3LIRi8DMElflq4ENzCF32gFfZcrGfOMUQUToRa_-DnrOHQiFEW4vtaj8fY4PxtH4M-dUMkAGc/pub?output=csv";
+
+    Papa.parse(SHEET_URL, {
+      download: true,
+      header: true,
+      complete: function(results) {
+        const data = results.data;
+        drawTable(data);
+        drawChart(data);
+      }
+    });
+
+    function drawTable(data) {
+      let html = "<table><thead><tr>";
+      Object.keys(data[0]).forEach(k => {
+        html += `<th>${k}</th>`;
+      });
+      html += "</tr></thead><tbody>";
+
+      data.forEach(row => {
+        html += "<tr>";
+        Object.values(row).forEach(cell => {
+          html += `<td>${cell}</td>`;
+        });
+        html += "</tr>";
+      });
+
+      html += "</tbody></table>";
+      document.getElementById("table").innerHTML = html;
+    }
+
+    function drawChart(data) {
+      const labels = data.map(row => row["STRIKE"] || row["Strike"]);
+      const callOI = data.map(row => parseFloat(row["OI"] || 0));
+      const putOI = data.map(row => parseFloat(row["PUT OI"] || 0));
+
+      new Chart(document.getElementById("chart1").getContext("2d"), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'CALL OI',
+              data: callOI,
+              backgroundColor: '#00bcd4'
+            },
+            {
+              label: 'PUT OI',
+              data: putOI,
+              backgroundColor: '#ff5722'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'CALL vs PUT Open Interest' }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
