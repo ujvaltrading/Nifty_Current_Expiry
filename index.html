@@ -1,122 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nifty Live Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #eee;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    canvas {
-      background: #fff;
-      border-radius: 10px;
-      margin: 20px auto;
-      display: block;
-      max-width: 100%;
-    }
-    #table {
-      width: 100%;
-      overflow-x: auto;
-      background: #222;
-      border-radius: 8px;
-      padding: 10px;
-      margin-top: 20px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      color: white;
-    }
-    th, td {
-      padding: 8px;
-      text-align: center;
-      border: 1px solid #444;
-    }
-    th {
-      background: #333;
-    }
-  </style>
-</head>
-<body>
-
-  <h1>Nifty 50 Live Dashboard</h1>
-  
-  <canvas id="chart1" height="200"></canvas>
-  <div id="table"></div>
-
-  <script>
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTWOYX3LIRi8DMElflq4ENzCF32gFfZcrGfOMUQUToRa_-DnrOHQiFEW4vtaj8fY4PxtH4M-dUMkAGc/pub?output=csv";
-
-    Papa.parse(SHEET_URL, {
-      download: true,
-      header: true,
-      complete: function(results) {
-        const data = results.data;
-        drawTable(data);
-        drawChart(data);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nifty 50 OI Live Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #0f172a;
+        color: #f1f5f9;
+        padding: 20px;
+        margin: 0;
+        animation: fadeIn 1s ease-in;
       }
-    });
 
-    function drawTable(data) {
-      let html = "<table><thead><tr>";
-      Object.keys(data[0]).forEach(k => {
-        html += `<th>${k}</th>`;
-      });
-      html += "</tr></thead><tbody>";
+      h1 {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        color: #38bdf8;
+      }
 
-      data.forEach(row => {
-        html += "<tr>";
-        Object.values(row).forEach(cell => {
-          html += `<td>${cell}</td>`;
-        });
-        html += "</tr>";
-      });
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+        background: #1e293b;
+        border-radius: 12px;
+        overflow: hidden;
+        animation: slideUp 0.8s ease-in-out;
+      }
 
-      html += "</tbody></table>";
-      document.getElementById("table").innerHTML = html;
-    }
+      th, td {
+        padding: 12px;
+        border: 1px solid #334155;
+        text-align: center;
+      }
 
-    function drawChart(data) {
-      const labels = data.map(row => row["STRIKE"] || row["Strike"]);
-      const callOI = data.map(row => parseFloat(row["OI"] || 0));
-      const putOI = data.map(row => parseFloat(row["PUT OI"] || 0));
+      th {
+        background-color: #0f172a;
+        color: #38bdf8;
+      }
 
-      new Chart(document.getElementById("chart1").getContext("2d"), {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'CALL OI',
-              data: callOI,
-              backgroundColor: '#00bcd4'
+      td.call {
+        background-color: #064e3b;
+        color: #34d399;
+        font-weight: bold;
+      }
+
+      td.put {
+        background-color: #7f1d1d;
+        color: #f87171;
+        font-weight: bold;
+      }
+
+      canvas {
+        background: #1e293b;
+        padding: 20px;
+        border-radius: 16px;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Nifty 50 OI Live Dashboard</h1>
+    <div id="data-container">Loading data...</div>
+    <canvas id="chart" height="100"></canvas>
+
+    <script>
+      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWOYX3LIRi8DMElflq4ENzCF32gFfZcrGfOMUQUToRa_-DnrOHQiFEW4vtaj8fY4PxtH4M-dUMkAGc/pub?output=csv';
+
+      fetch(sheetURL)
+        .then(res => res.text())
+        .then(data => {
+          const rows = data.split('\n').map(row => row.split(','));
+          const headerIndex = rows.findIndex(row => row[0].trim() === 'SYMBOL');
+          const validRows = rows.slice(headerIndex + 2).filter(row => row[0]);
+          const headers = rows[headerIndex + 1];
+
+          const table = document.createElement('table');
+          const thead = document.createElement('thead');
+          const tbody = document.createElement('tbody');
+
+          const headerRow = document.createElement('tr');
+          headers.forEach(h => {
+            const th = document.createElement('th');
+            th.textContent = h.trim();
+            headerRow.appendChild(th);
+          });
+          thead.appendChild(headerRow);
+
+          const labels = [];
+          const callOI = [];
+          const putOI = [];
+
+          validRows.forEach(row => {
+            const tr = document.createElement('tr');
+            row.forEach((cell, i) => {
+              const td = document.createElement('td');
+              td.textContent = cell.trim();
+
+              // CALL/PUT styling
+              if (headers[i].toLowerCase().includes('call')) td.classList.add('call');
+              if (headers[i].toLowerCase().includes('put')) td.classList.add('put');
+
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+
+            // Add chart data if exists
+            labels.push(row[0]);
+            callOI.push(parseInt(row[headers.indexOf('CALL OI')]) || 0);
+            putOI.push(parseInt(row[headers.indexOf('PUT OI')]) || 0);
+          });
+
+          table.appendChild(thead);
+          table.appendChild(tbody);
+          document.getElementById('data-container').innerHTML = '';
+          document.getElementById('data-container').appendChild(table);
+
+          new Chart(document.getElementById('chart'), {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: 'CALL OI',
+                  data: callOI,
+                  backgroundColor: '#22c55e'
+                },
+                {
+                  label: 'PUT OI',
+                  data: putOI,
+                  backgroundColor: '#ef4444'
+                }
+              ]
             },
-            {
-              label: 'PUT OI',
-              data: putOI,
-              backgroundColor: '#ff5722'
+            options: {
+              responsive: true,
+              scales: {
+                x: {
+                  ticks: { color: '#f1f5f9' }
+                },
+                y: {
+                  ticks: { color: '#f1f5f9' }
+                }
+              },
+              plugins: {
+                legend: {
+                  labels: { color: '#f1f5f9' }
+                }
+              }
             }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'CALL vs PUT Open Interest' }
-          }
-        }
-      });
-    }
-  </script>
-</body>
+          });
+        });
+    </script>
+  </body>
 </html>
