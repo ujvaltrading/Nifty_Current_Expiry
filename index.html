@@ -1,168 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nifty 50 OI Live Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-      body {
-        font-family: 'Segoe UI', sans-serif;
-        background: #0f172a;
-        color: #f1f5f9;
-        padding: 20px;
-        margin: 0;
-        animation: fadeIn 1s ease-in;
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nifty 50 OI Live Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0a0f1a;
+      color: white;
+      margin: 0;
+      padding: 1rem;
+    }
+
+    h1 {
+      text-align: center;
+      color: #32ff7e;
+    }
+
+    #dataTable {
+      width: 100%;
+      overflow-x: auto;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    #dataTable th, #dataTable td {
+      border: 1px solid #444;
+      padding: 8px;
+      text-align: center;
+    }
+
+    #dataTable th {
+      background-color: #111;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .call {
+      background-color: rgba(0, 255, 0, 0.1);
+      color: #00ff00;
+    }
+
+    .put {
+      background-color: rgba(255, 0, 0, 0.1);
+      color: #ff4d4d;
+    }
+
+    .trigger-call {
+      background-color: #00ff00;
+      color: black;
+      font-weight: bold;
+    }
+
+    .trigger-put {
+      background-color: #ff4d4d;
+      color: black;
+      font-weight: bold;
+    }
+
+    #chartContainer {
+      margin-top: 2rem;
+      background: #111;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+
+    button {
+      margin: 0.5rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h1>Nifty 50 OI Live Dashboard</h1>
+  <div id="tableContainer"></div>
+
+  <div id="chartContainer">
+    <h2>CALL vs PUT Comparison</h2>
+    <div>
+      <button onclick="renderChart('CALL OI', 'PUT OI')">OI</button>
+      <button onclick="renderChart('CALL OI Change', 'PUT OI Change')">OI Change</button>
+      <button onclick="renderChart('CALL Active Contracts', 'PUT Active Contracts')">Active Contracts</button>
+      <button onclick="renderChart('CALL Volume x LTP', 'PUT Volume x LTP')">Vol x LTP</button>
+      <button onclick="renderChart('CALL OI Base Vol', 'PUT OI Base Vol')">OI Base Vol</button>
+      <button onclick="renderChart('CALL Volume', 'PUT Volume')">Volume</button>
+    </div>
+    <canvas id="comparisonChart" width="400" height="150"></canvas>
+  </div>
+
+  <script>
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTWOYX3LIRi8DMElflq4ENzCF32gFfZcrGfOMUQUToRa_-DnrOHQiFEW4vtaj8fY4PxtH4M-dUMkAGc/pub?output=csv";
+    let globalData = [];
+
+    fetch(sheetURL)
+      .then(response => response.text())
+      .then(csv => {
+        const rows = csv.split("\n").map(r => r.split(","));
+        const headers = rows[0];
+        const dataRows = rows.slice(1).filter(row => row.length > 5 && !["SYMBOL", "NIFTY", ""].includes(row[0].trim()));
+        globalData = dataRows;
+        renderTable(headers, dataRows);
+      })
+      .catch(err => {
+        document.getElementById("tableContainer").innerHTML = "<p style='color:red;'>Failed to load data</p>";
+        console.error(err);
+      });
+
+    function renderTable(headers, rows) {
+      const table = document.createElement("table");
+      table.id = "dataTable";
+
+      const thead = document.createElement("thead");
+      const trHead = document.createElement("tr");
+      headers.forEach(h => {
+        const th = document.createElement("th");
+        th.innerText = h;
+        trHead.appendChild(th);
+      });
+      thead.appendChild(trHead);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      rows.forEach(row => {
+        const tr = document.createElement("tr");
+
+        row.forEach((cell, i) => {
+          const td = document.createElement("td");
+          const text = cell.trim();
+
+          // Style based on content
+          if (headers[i].toLowerCase().includes("trigger")) {
+            td.className = text.toLowerCase().includes("call") ? "trigger-call" : "trigger-put";
+          } else if (headers[i].toLowerCase().includes("call")) {
+            td.classList.add("call");
+          } else if (headers[i].toLowerCase().includes("put")) {
+            td.classList.add("put");
+          }
+
+          td.innerText = text;
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      document.getElementById("tableContainer").innerHTML = "";
+      document.getElementById("tableContainer").appendChild(table);
+    }
+
+    function renderChart(callColumn, putColumn) {
+      const ctx = document.getElementById("comparisonChart").getContext("2d");
+
+      const getColumnIndex = name => {
+        const header = globalData[0] || [];
+        return globalData[0].findIndex((val, idx) => val.includes(name));
+      };
+
+      const callIndex = getColumnIndex(callColumn);
+      const putIndex = getColumnIndex(putColumn);
+      const strikeIndex = 3; // Assuming Strike Price is at index 3
+
+      const strikes = globalData.map(row => row[strikeIndex]);
+      const callData = globalData.map(row => parseFloat(row[callIndex]) || 0);
+      const putData = globalData.map(row => parseFloat(row[putIndex]) || 0);
+
+      if (window.myChart) {
+        window.myChart.destroy();
       }
 
-      h1 {
-        text-align: center;
-        font-size: 2.5rem;
-        margin-bottom: 20px;
-        color: #38bdf8;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 30px;
-        background: #1e293b;
-        border-radius: 12px;
-        overflow: hidden;
-        animation: slideUp 0.8s ease-in-out;
-      }
-
-      th, td {
-        padding: 12px;
-        border: 1px solid #334155;
-        text-align: center;
-      }
-
-      th {
-        background-color: #0f172a;
-        color: #38bdf8;
-      }
-
-      td.call {
-        background-color: #064e3b;
-        color: #34d399;
-        font-weight: bold;
-      }
-
-      td.put {
-        background-color: #7f1d1d;
-        color: #f87171;
-        font-weight: bold;
-      }
-
-      canvas {
-        background: #1e293b;
-        padding: 20px;
-        border-radius: 16px;
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      @keyframes slideUp {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Nifty 50 OI Live Dashboard</h1>
-    <div id="data-container">Loading data...</div>
-    <canvas id="chart" height="100"></canvas>
-
-    <script>
-      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWOYX3LIRi8DMElflq4ENzCF32gFfZcrGfOMUQUToRa_-DnrOHQiFEW4vtaj8fY4PxtH4M-dUMkAGc/pub?output=csv';
-
-      fetch(sheetURL)
-        .then(res => res.text())
-        .then(data => {
-          const rows = data.split('\n').map(row => row.split(','));
-          const headerIndex = rows.findIndex(row => row[0].trim() === 'SYMBOL');
-          const validRows = rows.slice(headerIndex + 2).filter(row => row[0]);
-          const headers = rows[headerIndex + 1];
-
-          const table = document.createElement('table');
-          const thead = document.createElement('thead');
-          const tbody = document.createElement('tbody');
-
-          const headerRow = document.createElement('tr');
-          headers.forEach(h => {
-            const th = document.createElement('th');
-            th.textContent = h.trim();
-            headerRow.appendChild(th);
-          });
-          thead.appendChild(headerRow);
-
-          const labels = [];
-          const callOI = [];
-          const putOI = [];
-
-          validRows.forEach(row => {
-            const tr = document.createElement('tr');
-            row.forEach((cell, i) => {
-              const td = document.createElement('td');
-              td.textContent = cell.trim();
-
-              // CALL/PUT styling
-              if (headers[i].toLowerCase().includes('call')) td.classList.add('call');
-              if (headers[i].toLowerCase().includes('put')) td.classList.add('put');
-
-              tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
-
-            // Add chart data if exists
-            labels.push(row[0]);
-            callOI.push(parseInt(row[headers.indexOf('CALL OI')]) || 0);
-            putOI.push(parseInt(row[headers.indexOf('PUT OI')]) || 0);
-          });
-
-          table.appendChild(thead);
-          table.appendChild(tbody);
-          document.getElementById('data-container').innerHTML = '';
-          document.getElementById('data-container').appendChild(table);
-
-          new Chart(document.getElementById('chart'), {
-            type: 'bar',
-            data: {
-              labels,
-              datasets: [
-                {
-                  label: 'CALL OI',
-                  data: callOI,
-                  backgroundColor: '#22c55e'
-                },
-                {
-                  label: 'PUT OI',
-                  data: putOI,
-                  backgroundColor: '#ef4444'
-                }
-              ]
+      window.myChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: strikes,
+          datasets: [
+            {
+              label: callColumn,
+              data: callData,
+              borderColor: "#00ff00",
+              backgroundColor: "rgba(0,255,0,0.2)",
+              fill: true
             },
-            options: {
-              responsive: true,
-              scales: {
-                x: {
-                  ticks: { color: '#f1f5f9' }
-                },
-                y: {
-                  ticks: { color: '#f1f5f9' }
-                }
-              },
-              plugins: {
-                legend: {
-                  labels: { color: '#f1f5f9' }
-                }
+            {
+              label: putColumn,
+              data: putData,
+              borderColor: "#ff4d4d",
+              backgroundColor: "rgba(255,0,0,0.2)",
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "Strike Price"
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Value"
               }
             }
-          });
-        });
-    </script>
-  </body>
+          }
+        }
+      });
+    }
+  </script>
+</body>
 </html>
