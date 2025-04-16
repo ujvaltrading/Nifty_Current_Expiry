@@ -1,102 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nifty Live OI Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-      margin: 0;
-      padding: 0;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #334155;
-      text-align: center;
-    }
-    th {
-      background: #1e293b;
-      color: #fff;
-    }
-    tr.call {
-      background-color: rgba(34,197,94,0.1); /* light green */
-    }
-    tr.put {
-      background-color: rgba(239,68,68,0.1); /* light red */
-    }
-    .trigger-call {
-      background-color: #22c55e;
-      color: black;
-      font-weight: bold;
-    }
-    .trigger-put {
-      background-color: #ef4444;
-      color: black;
-      font-weight: bold;
-    }
-    #status {
-      text-align: center;
-      padding: 1rem;
-    }
-  </style>
-</head>
-<body>
-  <h1 style="text-align:center">📊 Nifty Live Options Dashboard</h1>
-  <div id="status">Loading live data...</div>
-  <div id="table-container"></div>
-
-  <script>
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWOYX3LIRi8DMElflq4ENzCF32gFfZcrGfOMUQUToRa_-DnrOHQiFEW4vtaj8fY4PxtH4M-dUMkAGc/pub?gid=1059790353&single=true&output=csv';
-
-    async function loadCSVData() {
-      try {
-        const res = await fetch(csvUrl);
-        if (!res.ok) throw new Error("Failed to load CSV");
-
-        const text = await res.text();
-        const rows = text.trim().split('\n').map(row => row.split(','));
-        const container = document.getElementById('table-container');
-        const status = document.getElementById('status');
-
-        // Remove unwanted rows like SYMBOL, STRIKE DIFF, etc.
-        const filteredRows = rows.filter(row => !(row[0] === "SYMBOL" || row[0] === "NIFTY" || row[0] === ""));
-
-        // Build table
-        let html = "<table>";
-        filteredRows.forEach((row, idx) => {
-          html += "<tr class='" + (row.includes("CALL") ? "call" : row.includes("PUT") ? "put" : "") + "'>";
-          row.forEach((cell, colIdx) => {
-            const cellTag = idx === 0 ? "th" : "td";
-            const isTrigger = filteredRows[0][colIdx].toLowerCase().includes("trigger");
-            const className = isTrigger && cell.toLowerCase().includes("call")
-              ? "trigger-call"
-              : isTrigger && cell.toLowerCase().includes("put")
-              ? "trigger-put"
-              : "";
-
-            html += `<${cellTag} class="${className}">${cell}</${cellTag}>`;
-          });
-          html += "</tr>";
-        });
-        html += "</table>";
-
-        container.innerHTML = html;
-        status.style.display = "none";
-      } catch (err) {
-        document.getElementById('status').innerText = "❌ Failed to load data.";
-        console.error(err);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nifty 50 OI Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+      body {
+        background-color: #0f172a;
+        color: white;
       }
-    }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th, td {
+        border: 1px solid #475569;
+        padding: 4px;
+        font-size: 0.75rem;
+        text-align: center;
+      }
+      th {
+        background-color: #1e293b;
+      }
+      .call-cell {
+        background-color: rgba(34, 197, 94, 0.15);
+      }
+      .put-cell {
+        background-color: rgba(239, 68, 68, 0.15);
+      }
+      .trigger-call {
+        background-color: #22c55e;
+        color: white;
+        font-weight: bold;
+      }
+      .trigger-put {
+        background-color: #ef4444;
+        color: white;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body class="p-4">
+    <h1 class="text-2xl font-bold text-center text-green-400 mb-4">Nifty Option Chain and OI Dashboard</h1>
 
-    loadCSVData();
-  </script>
-</body>
+    <div class="flex justify-center gap-4 mb-6">
+      <button onclick="showPage('option')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Option Chain</button>
+      <button onclick="showPage('bidask')" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Bid-Ask Data</button>
+      <button onclick="showPage('chart')" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Charts</button>
+    </div>
+
+    <div id="option" class="page-section"></div>
+    <div id="bidask" class="page-section hidden"></div>
+    <div id="chart" class="page-section hidden">
+      <canvas id="oiChart"></canvas>
+    </div>
+
+    <script>
+      const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWOYX3LIRi8DMElflq4ENzCF32gFfZcrGfOMUQUToRa_-DnrOHQiFEW4vtaj8fY4PxtH4M-dUMkAGc/pub?gid=1059790353&single=true&output=csv';
+
+      async function fetchData() {
+        try {
+          const response = await fetch(csvUrl);
+          const csvText = await response.text();
+          const rows = csvText.split('\n').map(row => row.split(','));
+          return rows.filter((row, index) => row[0] !== 'SYMBOL' && !row.includes('STRIKE DIFF') && !row.includes('SPOT PRICE') && row.join('').trim() !== '');
+        } catch (e) {
+          console.error('Failed to fetch data:', e);
+          return [];
+        }
+      }
+
+      function showPage(id) {
+        document.querySelectorAll('.page-section').forEach(div => div.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+      }
+
+      function renderTable(containerId, data, startCol, endCol, type) {
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+
+        const headerRow = document.createElement('tr');
+        data[0].slice(startCol, endCol + 1).forEach(text => {
+          const th = document.createElement('th');
+          th.innerText = text;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        for (let i = 1; i < data.length; i++) {
+          const tr = document.createElement('tr');
+          data[i].slice(startCol, endCol + 1).forEach((text, j) => {
+            const td = document.createElement('td');
+            td.innerText = text;
+            if (type === 'option') {
+              td.className = (j < ((endCol - startCol + 1) / 2)) ? 'call-cell' : 'put-cell';
+              if (data[i][endCol]?.toLowerCase() === 'call' && j === endCol - 1) td.className = 'trigger-call';
+              if (data[i][endCol]?.toLowerCase() === 'put' && j === endCol - 1) td.className = 'trigger-put';
+            }
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        }
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        document.getElementById(containerId).appendChild(table);
+      }
+
+      function renderChart(data) {
+        const strikePrices = [];
+        const callVolume = [];
+        const putVolume = [];
+
+        for (let i = 1; i < data.length; i++) {
+          const strike = data[i][11];
+          const callVol = parseInt(data[i][6]) || 0;
+          const putVol = parseInt(data[i][16]) || 0;
+          if (strike && !isNaN(callVol) && !isNaN(putVol)) {
+            strikePrices.push(strike);
+            callVolume.push(callVol);
+            putVolume.push(putVol);
+          }
+        }
+
+        new Chart(document.getElementById('oiChart').getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: strikePrices,
+            datasets: [
+              {
+                label: 'Call Volume',
+                data: callVolume,
+                borderColor: '#22c55e',
+                fill: false,
+              },
+              {
+                label: 'Put Volume',
+                data: putVolume,
+                borderColor: '#ef4444',
+                fill: false,
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                labels: {
+                  color: 'white'
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: 'white' }
+              },
+              y: {
+                ticks: { color: 'white' }
+              }
+            }
+          }
+        });
+      }
+
+      fetchData().then(data => {
+        if (data.length > 1) {
+          renderTable('option', data, 0, 24, 'option');
+          renderTable('bidask', data, 25, 38, 'bidask');
+          renderChart(data);
+        } else {
+          document.getElementById('option').innerText = 'Failed to load data.';
+        }
+      });
+    </script>
+  </body>
 </html>
