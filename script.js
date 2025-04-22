@@ -1,52 +1,40 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const searchInput = document.getElementById("searchInput");
-  const suggestions = document.createElement("div");
-  suggestions.style.background = "#222";
-  suggestions.style.position = "absolute";
-  suggestions.style.zIndex = "10";
-  suggestions.style.color = "white";
-  suggestions.style.width = "100%";
-  suggestions.style.borderRadius = "10px";
-  searchInput.parentNode.appendChild(suggestions);
+  const input = document.getElementById("searchInput");
+  const suggestions = document.getElementById("suggestions");
+  const symbolName = document.getElementById("stockName");
 
-  searchInput.addEventListener("", () => {
-    const val = searchInput.value.toLowerCase();
+  input.addEventListener("input", () => {
+    const val = input.value.toLowerCase();
     suggestions.innerHTML = "";
     if (val.length < 2) return;
-    const matched = symbolMap.filter(s => s.name.toLowerCase().includes(val));
+    const matched = symbolMap.filter(item => item.name.toLowerCase().includes(val));
     matched.forEach(item => {
-      const div = document.createElement("div");
-      div.style.padding = "8px";
-      div.style.cursor = "pointer";
-      div.textContent = item.name;
-      div.onclick = () => {
-        searchInput.value = item.name;
-        document.getElementById("stockName").textContent = item.symbol;
+      const li = document.createElement("li");
+      li.textContent = item.name;
+      li.onclick = () => {
+        input.value = item.name;
+        symbolName.textContent = item.symbol;
         suggestions.innerHTML = "";
-        loadData(); // simulate loading data
+        loadSampleData(); // simulate fetch
       };
-      suggestions.appendChild(div);
+      suggestions.appendChild(li);
     });
   });
 
-  function openTV() {
-    const symbol = document.getElementById("stockName").textContent.trim().toUpperCase();
-    window.open(`https://in.tradingview.com/symbols/NSE-${symbol}/`, "_blank");
-  }
-
-  function loadData() {
+  function loadSampleData() {
     const sampleData = [
       { callOI: 10000, callVol: 2000, callLTP: 150, strike: 19800, putLTP: 12.5, putVol: 1800, putOI: 800 },
       { callOI: 20000, callVol: 3000, callLTP: 120, strike: 19850, putLTP: 30.5, putVol: 1500, putOI: 600 },
       { callOI: 18000, callVol: 2500, callLTP: 100, strike: 19900, putLTP: 45.0, putVol: 900, putOI: 300 },
       { callOI: 9000, callVol: 1900, callLTP: 200, strike: 19750, putLTP: 9.0, putVol: 1400, putOI: 500 }
     ];
+
     const cmp = 19860.25;
     document.getElementById("cmpValue").textContent = cmp.toFixed(2);
     document.getElementById("cmpChange").textContent = "+115.75 (+0.59%)";
 
-    let closestDiff = Infinity;
     let atmIndex = -1;
+    let closestDiff = Infinity;
     const table = document.getElementById("optionTable");
     table.innerHTML = "";
 
@@ -60,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
         closestDiff = diff;
         atmIndex = idx;
       }
-
       if (row.callOI > highestOI && row.putOI < lowestOI) {
         bestRow = row;
         highestOI = row.callOI;
@@ -91,5 +78,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  loadData();
+  window.openTV = () => {
+    const symbol = symbolName.textContent.trim().toUpperCase();
+    window.open(`https://in.tradingview.com/symbols/NSE-${symbol}/`, "_blank");
+  };
+
+  loadSampleData(); // default
 });
