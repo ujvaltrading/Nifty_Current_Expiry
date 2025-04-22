@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Options Trading - Nifty 50</title>
+  <title>Options Trading - NSE Derivatives</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * {
@@ -18,7 +18,7 @@
       padding: 20px;
     }
     .container {
-      max-width: 900px;
+      max-width: 950px;
       margin: auto;
       background-color: #1a1f20;
       padding: 20px;
@@ -39,27 +39,6 @@
       padding: 5px 10px;
       border-radius: 8px;
     }
-    .buttons {
-      display: flex;
-      gap: 10px;
-      margin: 10px 0;
-    }
-    .buy, .sell {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .buy {
-      background-color: #1eb36a;
-      color: white;
-    }
-    .sell {
-      background-color: #e54444;
-      color: white;
-    }
     .ltp-section {
       font-size: 2.5rem;
       font-weight: bold;
@@ -71,6 +50,7 @@
     }
     .form-row {
       display: flex;
+      flex-wrap: wrap;
       gap: 20px;
       margin: 15px 0;
     }
@@ -81,6 +61,15 @@
       background-color: #282d2f;
       color: white;
       min-width: 120px;
+    }
+    .label-input {
+      display: flex;
+      flex-direction: column;
+    }
+    .label-input label {
+      font-size: 0.85rem;
+      margin-bottom: 5px;
+      color: #ccc;
     }
     table {
       width: 100%;
@@ -106,17 +95,50 @@
     }
     .green-bar { background-color: #1eb36a; }
     .red-bar { background-color: #e54444; }
+    .highlight-row {
+      background-color: #233438 !important;
+      border-left: 5px solid #42f59b;
+    }
+    .searchbox {
+      width: 100%;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .searchbox input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: #222;
+      color: white;
+      border: none;
+    }
+    .suggestions {
+      position: absolute;
+      background-color: #222;
+      width: 100%;
+      z-index: 10;
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 200px;
+    }
+    .suggestions div {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .suggestions div:hover {
+      background-color: #333;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div class="title">OPTIONS TRADING – NIFTY 50</div>
+      <div class="title">OPTIONS TRADING – NSE DERIVATIVES</div>
       <div class="expiry">EXPIRY<br><strong>27 JUL 2023</strong></div>
     </div>
-    <div class="buttons">
-      <button class="buy">BUY</button>
-      <button class="sell">SELL</button>
+    <div class="searchbox">
+      <input type="text" id="search" placeholder="Search stock/index symbol...">
+      <div id="suggestions" class="suggestions"></div>
     </div>
     <div class="ltp-section">19,860.25 <span>+115.75 (+0.59%)</span></div>
     <div class="form-row">
@@ -129,8 +151,14 @@
         <option>19.850</option>
         <option>19.700</option>
       </select>
-      <input type="text" placeholder="BUY TRIGGER" value="870" />
-      <input type="text" placeholder="SELL TRIGGER" value="765" />
+      <div class="label-input">
+        <label for="buy">BUY TRIGGER</label>
+        <input type="text" id="buy" value="870" />
+      </div>
+      <div class="label-input">
+        <label for="sell">SELL TRIGGER</label>
+        <input type="text" id="sell" value="765" />
+      </div>
     </div>
     <table>
       <thead>
@@ -145,16 +173,37 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td><div class="green-bar"></div></td><td>5 500</td><td>870</td><td>19.700</td><td>7.565</td><td>690</td><td><div class="red-bar"></div></td></tr>
-        <tr><td><div class="green-bar"></div></td><td>19 800</td><td>8715</td><td>19.800</td><td>21.305</td><td>380</td><td><div class="red-bar"></div></td></tr>
-        <tr><td><div class="green-bar"></div></td><td>8 900</td><td>875</td><td>19.800</td><td>4.915</td><td>4 380</td><td><div class="red-bar"></div></td></tr>
-        <tr><td><div class="green-bar"></div></td><td>10 300</td><td>-150</td><td>19.750</td><td>14.625</td><td>2 090</td><td><div class="red-bar"></div></td></tr>
-        <tr><td><div class="green-bar"></div></td><td>820,15</td><td>54 200</td><td>19.850</td><td>781.15</td><td>48 900</td><td><div class="red-bar"></div></td></tr>
-        <tr><td><div class="green-bar"></div></td><td>54 200</td><td>870</td><td>19.800</td><td>1.620</td><td>1.920</td><td><div class="red-bar"></div></td></tr>
-        <tr><td><div class="green-bar"></div></td><td>13 500</td><td>810</td><td>19.750</td><td>3:220</td><td>670</td><td><div class="red-bar"></div></td></tr>
-        <tr><td><div class="green-bar"></div></td><td>21 800</td><td>19.85</td><td>19.700</td><td>1.495</td><td>220</td><td><div class="red-bar"></div></td></tr>
+        <tr><td><div class="green-bar"></div></td><td>5500</td><td>870</td><td>19.700</td><td>7.565</td><td>690</td><td><div class="red-bar"></div></td></tr>
+        <tr class="highlight-row"><td><div class="green-bar"></div></td><td>19800</td><td>8715</td><td>19.800</td><td>21.305</td><td>380</td><td><div class="red-bar"></div></td></tr>
+        <tr><td><div class="green-bar"></div></td><td>8900</td><td>875</td><td>19.800</td><td>4.915</td><td>4380</td><td><div class="red-bar"></div></td></tr>
+        <tr><td><div class="green-bar"></div></td><td>10300</td><td>-150</td><td>19.750</td><td>14.625</td><td>2090</td><td><div class="red-bar"></div></td></tr>
       </tbody>
     </table>
   </div>
+
+  <script>
+    const symbols = ["NIFTY", "SENSEX", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "NIFTYNXT50", "ABB", "ACC", "APLAPOLLO", "AUBANK", "AARTIIND", "ADANIENSOL", "ADANIENT", "ADANIGREEN", "ADANIPORTS", "ATGL", "ABCAPITAL", "ABFRL", "ALKEM", "AMBUJACEM", "ANGELONE", "APOLLOHOSP", "APOLLOTYRE", "ASHOKLEY", "ASIANPAINT", "ASTRAL", "AUROPHARMA", "DMART", "AXISBANK", "BSOFT", "BSE", "BAJAJ-AUTO", "BAJFINANCE", "BAJAJFINSV", "BALKRISIND", "BANDHANBNK", "BANKBARODA", "BANKINDIA", "BERGEPAINT", "BEL", "BHARATFORG", "BHEL", "BPCL", "BHARTIARTL", "BIOCON", "BOSCHLTD", "BRITANNIA", "CESC", "CGPOWER", "CANBK", "CDSL", "CHAMBLFERT", "CHOLAFIN", "CIPLA", "COALINDIA", "COFORGE", "COLPAL", "CAMS", "CONCOR", "CROMPTON", "CUMMINSIND", "CYIENT", "DLF", "DABUR", "DALBHARAT", "DEEPAKNTR", "DELHIVERY", "DIVISLAB", "DIXON", "DRREDDY", "ETERNAL", "EICHERMOT", "ESCORTS", "EXIDEIND", "NYKAA", "GAIL", "GMRAIRPORT", "GLENMARK", "GODREJCP", "GODREJPROP", "GRANULES", "GRASIM", "HCLTECH", "HDFCAMC", "HDFCBANK", "HDFCLIFE", "HFCL", "HAVELLS", "HEROMOTOCO", "HINDALCO", "HAL", "HINDCOPPER", "HINDPETRO", "HINDUNILVR", "HINDZINC", "HUDCO", "ICICIBANK", "ICICIGI", "ICICIPRULI", "IDFCFIRSTB", "IIFL", "IRB", "ITC", "INDIANB", "IEX", "IOC", "IRCTC", "IRFC", "IREDA", "IGL", "INDUSTOWER", "INDUSINDBK", "NAUKRI", "INFY", "INOXWIND", "INDIGO", "JSWENERGY", "JSWSTEEL", "JSL", "JINDALSTEL", "JIOFIN", "JUBLFOOD", "KEI", "KPITTECH", "KALYANKJIL", "KOTAKBANK", "LTF", "LICHSGFIN", "LTIM", "LT", "LAURUSLABS", "LICI", "LUPIN", "MRF", "LODHA", "MGL", "M&MFIN", "M&M", "MANAPPURAM", "MARICO", "MARUTI", "MFSL", "MAXHEALTH", "MPHASIS", "MCX", "MUTHOOTFIN", "NBCC", "NCC", "NHPC", "NMDC", "NTPC", "NATIONALUM", "NESTLEIND", "OBEROIRLTY", "ONGC", "OIL", "PAYTM", "OFSS", "POLICYBZR", "PIIND", "PNBHOUSING", "PAGEIND", "PATANJALI", "PERSISTENT", "PETRONET", "PIDILITIND", "PEL", "POLYCAB", "POONAWALLA", "PFC", "POWERGRID", "PRESTIGE", "PNB", "RBLBANK", "RECLTD", "RELIANCE", "SBICARD", "SBILIFE", "SHREECEM", "SJVN", "SRF", "MOTHERSON", "SHRIRAMFIN", "SIEMENS", "SOLARINDS", "SONACOMS", "SBIN", "SAIL", "SUNPHARMA", "SUPREMEIND", "SYNGENE", "TATACONSUM", "TITAGARH", "TVSMOTOR", "TATACHEM", "TATACOMM", "TCS", "TATAELXSI", "TATAMOTORS", "TATAPOWER", "TATASTEEL", "TATATECH", "TECHM", "FEDERALBNK", "INDHOTEL", "PHOENIXLTD", "RAMCOCEM", "TITAN", "TORNTPHARM", "TORNTPOWER", "TRENT", "TIINDIA", "UPL", "ULTRACEMCO", "UNIONBANK", "UNITDSPR", "VBL", "VEDL", "IDEA", "VOLTAS", "WIPRO", "YESBANK", "ZYDUSLIFE"];
+
+    const search = document.getElementById('search');
+    const suggestions = document.getElementById('suggestions');
+
+    search.addEventListener('input', () => {
+      const val = search.value.toUpperCase();
+      suggestions.innerHTML = '';
+      if (val.length > 0) {
+        const filtered = symbols.filter(s => s.includes(val));
+        filtered.forEach(s => {
+          const div = document.createElement('div');
+          div.textContent = s;
+          div.onclick = () => {
+            search.value = s;
+            suggestions.innerHTML = '';
+            // Add event to trigger data load for selected symbol
+          };
+          suggestions.appendChild(div);
+        });
+      }
+    });
+  </script>
 </body>
 </html>
