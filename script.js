@@ -1,34 +1,47 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const searchInput = document.getElementById("searchInput");
-  const suggestions = document.createElement("div");
-  suggestions.style.background = "#222";
-  suggestions.style.position = "absolute";
-  suggestions.style.zIndex = "10";
-  suggestions.style.color = "white";
-  suggestions.style.width = "100%";
-  suggestions.style.borderRadius = "10px";
-  searchInput.parentNode.appendChild(suggestions);
+// Assuming input box has id="searchInput" and suggestions container has id="suggestions"
+const searchInput = document.getElementById("searchInput");
+const suggestionsContainer = document.getElementById("suggestions");
 
-  searchInput.addEventListener("input", () => {
-    const val = searchInput.value.toLowerCase();
-    suggestions.innerHTML = "";
-    if (val.length < 2) return;
-    const matched = symbolMap.filter(s => s.name.toLowerCase().includes(val));
-    matched.forEach(item => {
-      const div = document.createElement("div");
-      div.style.padding = "8px";
-      div.style.cursor = "pointer";
-      div.textContent = item.name;
-      div.onclick = () => {
-        searchInput.value = item.name;
-        document.getElementById("stockName").textContent = item.symbol;
-        suggestions.innerHTML = "";
-        loadData(); // simulate loading data
-      };
-      suggestions.appendChild(div);
-    });
+// Load symbolMap
+let symbolMap = {};
+fetch('symbolMap.js')
+  .then(res => res.text())
+  .then(js => {
+    eval(js); // populate symbolMap
   });
 
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.toLowerCase();
+  suggestionsContainer.innerHTML = "";
+
+  if (!query) return;
+
+  const filtered = Object.keys(symbolMap).filter(key =>
+    key.toLowerCase().includes(query)
+  );
+
+  filtered.forEach(symbol => {
+    const div = document.createElement("div");
+    div.textContent = symbol;
+    div.onclick = () => {
+      searchInput.value = symbol;
+      suggestionsContainer.innerHTML = "";
+      // Trigger your stock data logic here
+      const actualSymbol = symbolMap[symbol];
+      if (actualSymbol) {
+        loadStockData(actualSymbol); // <- your existing function
+      }
+    };
+    suggestionsContainer.appendChild(div);
+  });
+});
+
+// Hide suggestions on click outside
+document.addEventListener("click", (e) => {
+  if (!suggestionsContainer.contains(e.target) && e.target !== searchInput) {
+    suggestionsContainer.innerHTML = "";
+  }
+});
   function openTV() {
     const symbol = document.getElementById("stockName").textContent.trim().toUpperCase();
     window.open(`https://in.tradingview.com/symbols/NSE-${symbol}/`, "_blank");
