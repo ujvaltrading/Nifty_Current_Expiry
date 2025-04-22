@@ -1,0 +1,121 @@
+
+body {
+  background-color: #101617;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 10px;
+}
+.container {
+  max-width: 1080px;
+  margin: auto;
+  background: #1a1f20;
+  padding: 20px;
+  border-radius: 16px;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.title {
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+.expiry-select {
+  background: #282d2f;
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.9rem;
+}
+.search-section {
+  position: relative;
+}
+#searchInput {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  background: #282d2f;
+  border: none;
+  border-radius: 10px;
+  color: white;
+}
+#suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  top: calc(100% - 1px);
+  left: 0;
+  right: 0;
+  background: #2b2f31;
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+  z-index: 10;
+}
+#suggestions li {
+  padding: 10px;
+  cursor: pointer;
+}
+#suggestions li:hover {
+  background-color: #3b3b3b;
+}
+.cmp-line {
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin: 10px 0;
+}
+.cmp-line span {
+  color: #42f59b;
+  font-size: 1rem;
+}
+.info-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.info-row input, .info-row button {
+  flex: 1;
+  padding: 10px;
+  font-size: 0.9rem;
+  background: #282d2f;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+.trigger-box {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.trigger-box input {
+  flex: 1;
+  padding: 10px;
+  font-size: 0.9rem;
+  background-color: #282d2f;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+th, td {
+  padding: 8px;
+  text-align: center;
+  font-size: 0.8rem;
+}
+th { color: #aaa; }
+tr:nth-child(even) { background-color: #151a1b; }
+tr.highlight { background-color: #2d403d; }
+
+@media (max-width: 768px) {
+  .info-row, .trigger-box {
+    flex-direction: column;
+  }
+}
