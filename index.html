@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="symbolMap.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Helpola - LTP PTP Calculator</title>
@@ -80,7 +79,7 @@
       flex: 1;
       padding: 10px;
       font-size: 0.9rem;
-      background: #282d2f;
+      background-color: #282d2f;
       color: white;
       border: none;
       border-radius: 10px;
@@ -95,23 +94,18 @@
       text-align: center;
       font-size: 0.8rem;
     }
-    th {
-      color: #aaa;
-    }
-    tr:nth-child(even) {
-      background-color: #151a1b;
-    }
-    tr.highlight {
-      background-color: #2d403d;
-    }
+    th { color: #aaa; }
+    tr:nth-child(even) { background-color: #151a1b; }
+    tr.highlight { background-color: #2d403d; }
   </style>
+  <script src="symbolMap.js"></script>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <div class="title">OPTIONS TRADING – <span id="stockName">NIFTY 50</span></div>
       <select id="expirySelect" class="expiry-select">
-        <option>Loading expiry...</option>
+        <option>27 JUL 2023</option>
       </select>
     </div>
     <input type="text" id="searchInput" placeholder="🔍 Search Stock or Index Name..." />
@@ -137,11 +131,6 @@
       <tbody id="optionTable"></tbody>
     </table>
   </div>
-  <script>
-    function openTV() {
-      const symbol = document.getElementById("stockName").textContent.trim().toUpperCase();
-      window.open(`https://in.tradingview.com/symbols/NSE-${symbol}/`, "_blank");
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
