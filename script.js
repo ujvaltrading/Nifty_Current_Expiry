@@ -1,4 +1,4 @@
-document.addEventListener("", () => {
+document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("searchInput");
   const suggestions = document.createElement("div");
   suggestions.style.background = "#222";
