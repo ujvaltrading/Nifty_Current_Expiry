@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   suggestions.style.borderRadius = "10px";
   searchInput.parentNode.appendChild(suggestions);
 
-  searchInput.addEventListener("input", () => {
+  searchInput.addEventListener("", () => {
     const val = searchInput.value.toLowerCase();
     suggestions.innerHTML = "";
     if (val.length < 2) return;
