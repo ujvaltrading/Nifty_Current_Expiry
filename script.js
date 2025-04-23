@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
         input.value = item.name;
         symbolName.textContent = item.symbol;
         suggestions.innerHTML = "";
-        loadSampleData(); // simulate fetch
+        loadSampleData(); // https://7536f3ad-b6e9-4e93-bb26-e824e95a3ed7-00-28ope58z5rl6f.pike.replit.dev/
       };
       suggestions.appendChild(li);
     });
