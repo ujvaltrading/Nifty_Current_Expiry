@@ -15,66 +15,72 @@ document.addEventListener("DOMContentLoaded", () => {
         input.value = item.name;
         symbolName.textContent = item.symbol;
         suggestions.innerHTML = "";
-        loadSampleData(); // https://7536f3ad-b6e9-4e93-bb26-e824e95a3ed7-00-28ope58z5rl6f.pike.replit.dev/
+        loadLiveData(item.symbol); // ✅ LIVE NSE DATA
       };
       suggestions.appendChild(li);
     });
   });
 
-  function loadSampleData() {
-    const sampleData = [
-      { callOI: 10000, callVol: 2000, callLTP: 150, strike: 19800, putLTP: 12.5, putVol: 1800, putOI: 800 },
-      { callOI: 20000, callVol: 3000, callLTP: 120, strike: 19850, putLTP: 30.5, putVol: 1500, putOI: 600 },
-      { callOI: 18000, callVol: 2500, callLTP: 100, strike: 19900, putLTP: 45.0, putVol: 900, putOI: 300 },
-      { callOI: 9000, callVol: 1900, callLTP: 200, strike: 19750, putLTP: 9.0, putVol: 1400, putOI: 500 }
-    ];
+  async function loadLiveData(symbol) {
+    const apiUrl = `https://nifty50-oi-calculator.onrender.com/option-chain?symbol=${symbol}`;
+    try {
+      const res = await fetch(apiUrl);
+      const result = await res.json();
 
-    const cmp = 19860.25;
-    document.getElementById("cmpValue").textContent = cmp.toFixed(2);
-    document.getElementById("cmpChange").textContent = "+115.75 (+0.59%)";
+      const cmp = result.underlyingValue;
+      const optionData = result.optionData;
 
-    let atmIndex = -1;
-    let closestDiff = Infinity;
-    const table = document.getElementById("optionTable");
-    table.innerHTML = "";
+      document.getElementById("cmpValue").textContent = cmp.toFixed(2);
+      document.getElementById("cmpChange").textContent = ""; // आप चाहें तो change percentage भी ला सकते हैं
 
-    let bestRow = null;
-    let highestOI = -Infinity;
-    let lowestOI = Infinity;
+      const table = document.getElementById("optionTable");
+      table.innerHTML = "";
 
-    sampleData.forEach((row, idx) => {
-      const diff = Math.abs(row.strike - cmp);
-      if (diff < closestDiff) {
-        closestDiff = diff;
-        atmIndex = idx;
+      let atmIndex = -1;
+      let closestDiff = Infinity;
+
+      let bestRow = null;
+      let highestOI = -Infinity;
+      let lowestOI = Infinity;
+
+      optionData.forEach((row, idx) => {
+        const diff = Math.abs(row.strikePrice - cmp);
+        if (diff < closestDiff) {
+          closestDiff = diff;
+          atmIndex = idx;
+        }
+
+        if (row.call.oiChange > highestOI && row.put.oiChange < lowestOI) {
+          bestRow = row;
+          highestOI = row.call.oiChange;
+          lowestOI = row.put.oiChange;
+        }
+      });
+
+      optionData.forEach((row, idx) => {
+        const tr = document.createElement("tr");
+        if (idx === atmIndex) tr.classList.add("highlight");
+        tr.innerHTML = `
+          <td>${row.call.oiChange}</td><td>${row.call.volume}</td><td>${row.call.ltp}</td>
+          <td>${row.strikePrice}</td><td>${row.put.ltp}</td><td>${row.put.volume}</td><td>${row.put.oiChange}</td>
+        `;
+        table.appendChild(tr);
+      });
+
+      document.getElementById("autoStrike").value = bestRow.strikePrice;
+      const diff = Math.abs(bestRow.call.oiChange - bestRow.put.oiChange);
+      const perc = (diff / Math.max(bestRow.call.oiChange, bestRow.put.oiChange)) * 100;
+
+      if (bestRow.call.oiChange < bestRow.put.oiChange) {
+        document.getElementById("buyTrigger").value = (bestRow.call.ltp - (bestRow.call.ltp * perc / 100)).toFixed(2);
+        document.getElementById("sellTrigger").value = "No Trade found";
+      } else {
+        document.getElementById("sellTrigger").value = (bestRow.put.ltp - (bestRow.put.ltp * perc / 100)).toFixed(2);
+        document.getElementById("buyTrigger").value = "No Trade found";
       }
-      if (row.callOI > highestOI && row.putOI < lowestOI) {
-        bestRow = row;
-        highestOI = row.callOI;
-        lowestOI = row.putOI;
-      }
-    });
 
-    sampleData.forEach((row, idx) => {
-      const tr = document.createElement("tr");
-      if (idx === atmIndex) tr.classList.add("highlight");
-      tr.innerHTML = `
-        <td>${row.callOI}</td><td>${row.callVol}</td><td>${row.callLTP}</td>
-        <td>${row.strike}</td><td>${row.putLTP}</td><td>${row.putVol}</td><td>${row.putOI}</td>
-      `;
-      table.appendChild(tr);
-    });
-
-    document.getElementById("autoStrike").value = bestRow.strike;
-    const diff = Math.abs(bestRow.callOI - bestRow.putOI);
-    const perc = (diff / Math.max(bestRow.callOI, bestRow.putOI)) * 100;
-
-    if (bestRow.callOI < bestRow.putOI) {
-      document.getElementById("buyTrigger").value = (bestRow.callLTP - (bestRow.callLTP * perc / 100)).toFixed(2);
-      document.getElementById("sellTrigger").value = "No Trade found";
-    } else {
-      document.getElementById("sellTrigger").value = (bestRow.putLTP - (bestRow.putLTP * perc / 100)).toFixed(2);
-      document.getElementById("buyTrigger").value = "No Trade found";
+    } catch (error) {
+      console.error("API Error:", error);
     }
   }
 
@@ -83,5 +89,5 @@ document.addEventListener("DOMContentLoaded", () => {
     window.open(`https://in.tradingview.com/symbols/NSE-${symbol}/`, "_blank");
   };
 
-  loadSampleData(); // default
+  loadLiveData("NIFTY"); // ✅ default load
 });
