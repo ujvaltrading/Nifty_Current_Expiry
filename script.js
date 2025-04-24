@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function loadLiveData(symbol) {
     try {
-      const res = await fetch("https://nifty50-oi-calculator.onrender.com/option-chain?symbol=NIFTY");
+      const res = await fetch(`https://nifty50-oi-calculator.onrender.com/option-chain?symbol=${symbol}`);
 
       const result = await res.json();
 
