@@ -7,7 +7,6 @@ import time
 app = Flask(__name__)
 CORS(app)
 
-# ✅ यह चेक करेगा कि सिंबल इंडेक्स है या स्टॉक
 def is_index(symbol):
     indices = ['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'NIFTYNXT50']
     return symbol in indices
@@ -28,8 +27,9 @@ def option_chain():
         "Origin": "https://www.nseindia.com"
     }
 
-    max_retries = 5  # ✅ यहां परिभाषित करें
-    retry_delay = 3  # ✅ ट्राई ब्लॉक से पहले
+    max_retries = 5
+    retry_delay = 3
+    data = None
 
     try:
         for attempt in range(max_retries):
@@ -44,12 +44,8 @@ def option_chain():
                 if attempt == max_retries - 1:
                     return jsonify({"error": f"NSE API Error: {str(e)}"}), 503
                 time.sleep(retry_delay)
-        
-        # ...rest processing code
 
-    except Exception as e:
-        return jsonify({"error": f"Server Error: {str(e)}"}), 500
-        # ✅ डेटा प्रोसेसिंग (आपका पुराना लॉजिक)
+        # ✅ डेटा प्रोसेसिंग (अब यह सही जगह पर है)
         response = {
             "underlyingValue": data["records"]["underlyingValue"],
             "expiryDates": data["records"]["expiryDates"],
