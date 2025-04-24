@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
         input.value = item.name;
         symbolName.textContent = item.symbol;
         suggestions.innerHTML = "";
-        loadLiveData(item.symbol); // ✅ LIVE NSE DATA
+        loadLiveData(item.symbol);
       };
       suggestions.appendChild(li);
     });
@@ -23,71 +23,78 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function loadLiveData(symbol) {
     try {
-      const res = await fetch(`https://nifty50-oi-calculator.onrender.com/option-chain?symbol=${symbol}`);
-
+      const res = await fetch(`https://nifty-oi-calc.onrender.com/option-chain?symbol=${symbol}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      
       const result = await res.json();
+      
+      // CMP प्रोसेसिंग
+      const cmp = result.underlyingValue || 0;
+      document.getElementById("cmpValue").textContent = cmp.toFixed(2);
+      document.getElementById("cmpChange").textContent = ""; 
 
-      const cmp = result.underlyingValue || result.strikePrice || 0;
-      const optionData = result.optionData || [];
-
-      document.getElementById("cmpValue").textContent = cmp ? cmp.toFixed(2) : "N/A";
-      document.getElementById("cmpChange").textContent = ""; // आप चाहें तो change percentage भी ला सकते हैं
-
+      // टेबल डेटा अपडेट
       const table = document.getElementById("optionTable");
       table.innerHTML = "";
 
       let atmIndex = -1;
       let closestDiff = Infinity;
-
       let bestRow = null;
       let highestOI = -Infinity;
       let lowestOI = Infinity;
 
-      optionData.forEach((row, idx) => {
+      // ATM और बेस्ट रो की गणना
+      result.optionData.forEach((row, idx) => {
         const diff = Math.abs(row.strikePrice - cmp);
         if (diff < closestDiff) {
           closestDiff = diff;
           atmIndex = idx;
         }
 
-        if (row.call.oiChange > highestOI && row.put.oiChange < lowestOI) {
+        if (row.call?.oiChange > highestOI && row.put?.oiChange < lowestOI) {
           bestRow = row;
           highestOI = row.call.oiChange;
           lowestOI = row.put.oiChange;
         }
       });
 
-      optionData.forEach((row, idx) => {
+      // टेबल भरें
+      result.optionData.forEach((row, idx) => {
         const tr = document.createElement("tr");
         if (idx === atmIndex) tr.classList.add("highlight");
         tr.innerHTML = `
-          <td>${row.call.oiChange}</td><td>${row.call.volume}</td><td>${row.call.ltp}</td>
-          <td>${row.strikePrice}</td><td>${row.put.ltp}</td><td>${row.put.volume}</td><td>${row.put.oiChange}</td>
+          <td>${row.call?.oiChange || 0}</td>
+          <td>${row.call?.volume || 0}</td>
+          <td>${row.call?.ltp || 0}</td>
+          <td>${row.strikePrice}</td>
+          <td>${row.put?.ltp || 0}</td>
+          <td>${row.put?.volume || 0}</td>
+          <td>${row.put?.oiChange || 0}</td>
         `;
         table.appendChild(tr);
       });
 
+      // ट्रिगर प्राइस अपडेट
       if (bestRow) {
         document.getElementById("autoStrike").value = bestRow.strikePrice;
-        const diff = Math.abs(bestRow.call.oiChange - bestRow.put.oiChange);
-        const perc = (diff / Math.max(bestRow.call.oiChange, bestRow.put.oiChange)) * 100;
+        const callOI = bestRow.call?.oiChange || 0;
+        const putOI = bestRow.put?.oiChange || 0;
+        const diff = Math.abs(callOI - putOI);
+        const perc = diff / Math.max(callOI, putOI) * 100 || 0;
 
-        if (bestRow.call.oiChange < bestRow.put.oiChange) {
-          document.getElementById("buyTrigger").value = (bestRow.call.ltp - (bestRow.call.ltp * perc / 100)).toFixed(2);
+        if (callOI < putOI) {
+          document.getElementById("buyTrigger").value = (bestRow.call?.ltp - (bestRow.call?.ltp * perc / 100)).toFixed(2) || "N/A";
           document.getElementById("sellTrigger").value = "No Trade found";
         } else {
-          document.getElementById("sellTrigger").value = (bestRow.put.ltp - (bestRow.put.ltp * perc / 100)).toFixed(2);
+          document.getElementById("sellTrigger").value = (bestRow.put?.ltp - (bestRow.put?.ltp * perc / 100)).toFixed(2) || "N/A";
           document.getElementById("buyTrigger").value = "No Trade found";
         }
-
-        // ✅ Extra live info display
-        document.getElementById("strike").textContent = "Strike Price: " + bestRow.strikePrice;
-        document.getElementById("callVol").textContent = "Call Volume: " + bestRow.call.volume;
-        document.getElementById("putOi").textContent = "Put OI Change: " + bestRow.put.oiChange;
       }
 
     } catch (error) {
       console.error("API Error:", error);
+      document.getElementById("cmpValue").textContent = "Error";
+      document.getElementById("optionTable").innerHTML = "<tr><td colspan='7'>Data not available</td></tr>";
     }
   }
 
@@ -96,5 +103,5 @@ document.addEventListener("DOMContentLoaded", () => {
     window.open(`https://in.tradingview.com/symbols/NSE-${symbol}/`, "_blank");
   };
 
-  loadLiveData("NIFTY"); // ✅ default load
+  loadLiveData("NIFTY"); // डिफ़ॉल्ट लोड
 });
