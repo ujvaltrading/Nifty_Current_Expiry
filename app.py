@@ -1,54 +1,51 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-import requests
-import os
+import yfinance as yf
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Enable CORS for all routes
 
-@app.route('/option-chain', methods=['GET'])
+@app.route("/")
+def home():
+    return "<h2>✅ Welcome to NIFTY50 PTP Option Chain API</h2><p>Use endpoint like: /option-chain?symbol=RELIANCE</p>"
+
+@app.route("/option-chain")
 def option_chain():
-    symbol = request.args.get('symbol', 'NIFTY').upper()
-    url = f"https://www.nseindia.com/api/option-chain-indices?symbol={symbol}"
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Accept-Language": "en-US,en;q=0.9"
-    }
-
     try:
-        session = requests.Session()
-        session.get("https://www.nseindia.com", headers=headers)
-        res = session.get(url, headers=headers)
-        data = res.json()
+        # 1. Get symbol from query string
+        symbol = request.args.get("symbol")
+        if not symbol:
+            return jsonify({"error": "Symbol is required"}), 400
 
-        response = {
-            "underlyingValue": data["records"]["underlyingValue"],
-            "expiryDates": data["records"]["expiryDates"],
-            "optionData": []
+        # 2. Convert to Yahoo format
+        yf_symbol = symbol.upper() + ".NS"
+
+        # 3. Fetch data using yfinance
+        ticker = yf.Ticker(yf_symbol)
+        current_price = ticker.info.get("regularMarketPrice")
+
+        if current_price is None:
+            return jsonify({"error": "Could not fetch live data. Check symbol or try again."}), 404
+
+        # 4. Apply your PTP logic
+        strike_price = round(current_price / 100) * 100
+        expected_price = round(current_price * 1.015, 2)
+        trigger = "BUY" if expected_price > current_price else "SELL"
+
+        # 5. Send JSON response
+        result = {
+            "symbol": symbol.upper(),
+            "currentPrice": current_price,
+            "strikePrice": strike_price,
+            "expectedPrice": expected_price,
+            "trigger": trigger
         }
 
-        for item in data["records"]["data"]:
-            ce = item.get("CE", {})
-            pe = item.get("PE", {})
-            response["optionData"].append({
-                "strikePrice": item.get("strikePrice"),
-                "call": {
-                    "ltp": ce.get("lastPrice", 0),
-                    "volume": ce.get("totalTradedVolume", 0),
-                    "oiChange": ce.get("changeinOpenInterest", 0)
-                },
-                "put": {
-                    "ltp": pe.get("lastPrice", 0),
-                    "volume": pe.get("totalTradedVolume", 0),
-                    "oiChange": pe.get("changeinOpenInterest", 0)
-                }
-            })
-
-        return jsonify(response)
+        return jsonify(result)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))  # ✅ Render की requirement
-    app.run(host='0.0.0.0', port=port)
+if __name__ == "__main__":
+    # Port 3000 for Replit/Render
+    app.run(host="0.0.0.0", port=3000)
