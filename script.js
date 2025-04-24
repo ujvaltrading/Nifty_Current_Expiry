@@ -23,13 +23,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function loadLiveData(symbol) {
     try {
-      const res = await fetch(`https://nifty50-oi-calculator.onrender.com/option-chain?symbol=${symbol}`);
+      const res = await fetch("https://7536f3ad-b6e9-4e93-bb26-e824e95a3ed7-00-28ope58z5rl6f.pike.replit.dev:3000/api/data");
       const result = await res.json();
 
-      const cmp = result.underlyingValue || 0;
+      const cmp = result.underlyingValue || result.strikePrice || 0;
       const optionData = result.optionData || [];
 
-      document.getElementById("cmpValue").textContent = cmp.toFixed(2);
+      document.getElementById("cmpValue").textContent = cmp ? cmp.toFixed(2) : "N/A";
       document.getElementById("cmpChange").textContent = ""; // आप चाहें तो change percentage भी ला सकते हैं
 
       const table = document.getElementById("optionTable");
@@ -78,15 +78,15 @@ document.addEventListener("DOMContentLoaded", () => {
           document.getElementById("sellTrigger").value = (bestRow.put.ltp - (bestRow.put.ltp * perc / 100)).toFixed(2);
           document.getElementById("buyTrigger").value = "No Trade found";
         }
-      } else {
-        console.warn("No bestRow found for trigger calculations.");
-        document.getElementById("buyTrigger").value = "N/A";
-        document.getElementById("sellTrigger").value = "N/A";
+
+        // ✅ Extra live info display
+        document.getElementById("strike").textContent = "Strike Price: " + bestRow.strikePrice;
+        document.getElementById("callVol").textContent = "Call Volume: " + bestRow.call.volume;
+        document.getElementById("putOi").textContent = "Put OI Change: " + bestRow.put.oiChange;
       }
 
     } catch (error) {
       console.error("API Error:", error);
-      alert("Data fetch karne mein dikkat aa gayi. Kripya thodi der baad try karein.");
     }
   }
 
