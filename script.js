@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function loadLiveData(symbol) {
     try {
-      const res = await fetch("https://7536f3ad-b6e9-4e93-bb26-e824e95a3ed7-00-28ope58z5rl6f.pike.replit.dev:3000/api/data");
+      const res = await fetch("https://7536f3ad-b6e9-4e93-bb26-e824e95a3ed7-00-28ope58z5rl6f.pike.replit.dev:3000/");
       const result = await res.json();
 
       const cmp = result.underlyingValue || result.strikePrice || 0;
