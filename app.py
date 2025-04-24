@@ -31,8 +31,8 @@ def option_chain():
 
     try:
         # ✅ 3 बार रिट्राई करने का लॉजिक
-        max_retries = 3
-retry_delay = 5  # सेकंड
+        max_retries = 5
+retry_delay = 3  # सेकंड
 for attempt in range(max_retries):
     try:
         session = requests.Session()
