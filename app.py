@@ -23,27 +23,28 @@ def option_chain():
         url = f"https://www.nseindia.com/api/option-chain-equities?symbol={symbol}"
     
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive"
-    }
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.nseindia.com/",
+    "Origin": "https://www.nseindia.com"
+}
 
     try:
         # ✅ 3 बार रिट्राई करने का लॉजिक
         max_retries = 3
-        for _ in range(max_retries):
-            try:
-                session = requests.Session()
-                # ✅ पहले NSE की मुख्य वेबसाइट विजिट करें (Cookies के लिए)
-                session.get("https://www.nseindia.com", headers=headers, timeout=15)
-                # ✅ API कॉल करें
-                res = session.get(url, headers=headers, timeout=20)
-                res.raise_for_status()  # HTTP एरर चेक करे
-                data = res.json()
-                break
-            except requests.exceptions.RequestException:
-                time.sleep(2)  # 2 सेकंड इंतजार करें
+retry_delay = 5  # सेकंड
+for attempt in range(max_retries):
+    try:
+        session = requests.Session()
+        session.get("https://www.nseindia.com", headers=headers, timeout=15)
+        res = session.get(url, headers=headers, timeout=25)
+        res.raise_for_status()
+        data = res.json()
+        break
+    except requests.exceptions.RequestException as e:
+        if attempt == max_retries - 1:
+            return jsonify({"error": f"NSE API Error: {str(e)}"}), 503
+        time.sleep(retry_delay)
         else:
             return jsonify({"error": "NSE API unreachable after 3 attempts"}), 503
 
