@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
 import os
+import time
 
 app = Flask(__name__)
 CORS(app)
@@ -22,17 +23,29 @@ def option_chain():
         url = f"https://www.nseindia.com/api/option-chain-equities?symbol={symbol}"
     
     headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Connection": "keep-alive"
-}
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive"
+    }
 
     try:
-        session = requests.Session()
-        session.get("https://www.nseindia.com", headers=headers)  # ✅ Cookies लेने के लिए
-        res = session.get(url, headers=headers)
-        data = res.json()
+        # ✅ 3 बार रिट्राई करने का लॉजिक
+        max_retries = 3
+        for _ in range(max_retries):
+            try:
+                session = requests.Session()
+                # ✅ पहले NSE की मुख्य वेबसाइट विजिट करें (Cookies के लिए)
+                session.get("https://www.nseindia.com", headers=headers, timeout=15)
+                # ✅ API कॉल करें
+                res = session.get(url, headers=headers, timeout=20)
+                res.raise_for_status()  # HTTP एरर चेक करे
+                data = res.json()
+                break
+            except requests.exceptions.RequestException:
+                time.sleep(2)  # 2 सेकंड इंतजार करें
+        else:
+            return jsonify({"error": "NSE API unreachable after 3 attempts"}), 503
 
         # ✅ डेटा प्रोसेसिंग (आपका पुराना लॉजिक)
         response = {
@@ -61,7 +74,7 @@ def option_chain():
         return jsonify(response)
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Server Error: {str(e)}"}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
