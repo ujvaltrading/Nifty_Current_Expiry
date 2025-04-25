@@ -14,7 +14,10 @@ def is_index(symbol):
 @app.route('/option-chain', methods=['GET'])
 def option_chain():
     symbol = request.args.get('symbol', 'NIFTY').upper()
-    encoded_symbol = requests.utils.quote(symbol)  # Special characters encode
+    expiry = request.args.get('expiry', '')  # नया पैरामीटर
+    
+    # स्पेशल करैक्टर एन्कोडिंग
+    encoded_symbol = requests.utils.quote(symbol)
     
     if is_index(symbol):
         url = f"https://www.nseindia.com/api/option-chain-indices?symbol={encoded_symbol}"
@@ -46,13 +49,20 @@ def option_chain():
                     return jsonify({"error": f"NSE API Error: {str(e)}"}), 503
                 time.sleep(retry_delay)
 
+        # ✅ एक्सपायरी डेट फ़िल्टर करें
+        filtered_data = []
+        for item in data["records"]["data"]:
+            if expiry and item.get("expiryDate") != expiry:
+                continue
+            filtered_data.append(item)
+
         response = {
             "underlyingValue": data["records"]["underlyingValue"],
             "expiryDates": data["records"]["expiryDates"],
             "optionData": []
         }
 
-        for item in data["records"]["data"]:
+        for item in filtered_data:  # फ़िल्टर किया गया डेटा
             ce = item.get("CE", {})
             pe = item.get("PE", {})
             response["optionData"].append({
