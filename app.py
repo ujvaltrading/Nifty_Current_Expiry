@@ -14,9 +14,9 @@ def is_index(symbol):
 @app.route('/option-chain', methods=['GET'])
 def option_chain():
     symbol = request.args.get('symbol', 'NIFTY').upper()
-    expiry = request.args.get('expiry', '')  # नया पैरामीटर
+    expiry = request.args.get('expiry', '')
     
-    # स्पेशल करैक्टर एन्कोडिंग
+    # विशेष करैक्टर एन्कोडिंग (जैसे M&M → M%26M)
     encoded_symbol = requests.utils.quote(symbol)
     
     if is_index(symbol):
@@ -32,29 +32,24 @@ def option_chain():
     }
 
     max_retries = 5
-    retry_delay = 3
     data = None
 
     try:
+        session = requests.Session()
         for attempt in range(max_retries):
             try:
-                session = requests.Session()
                 session.get("https://www.nseindia.com", headers=headers, timeout=15)
                 res = session.get(url, headers=headers, timeout=25)
                 res.raise_for_status()
                 data = res.json()
                 break
-            except requests.exceptions.RequestException as e:
+            except requests.exceptions.RequestException:
                 if attempt == max_retries - 1:
-                    return jsonify({"error": f"NSE API Error: {str(e)}"}), 503
-                time.sleep(retry_delay)
+                    return jsonify({"error": "NSE API Unreachable"}), 503
+                time.sleep(3)
 
-        # ✅ एक्सपायरी डेट फ़िल्टर करें
-        filtered_data = []
-        for item in data["records"]["data"]:
-            if expiry and item.get("expiryDate") != expiry:
-                continue
-            filtered_data.append(item)
+        # एक्सपायरी डेट फ़िल्टर
+        filtered_data = [item for item in data["records"]["data"] if not expiry or item.get("expiryDate") == expiry]
 
         response = {
             "underlyingValue": data["records"]["underlyingValue"],
@@ -62,11 +57,11 @@ def option_chain():
             "optionData": []
         }
 
-        for item in filtered_data:  # फ़िल्टर किया गया डेटा
+        for item in filtered_data:
             ce = item.get("CE", {})
             pe = item.get("PE", {})
             response["optionData"].append({
-                "strikePrice": item.get("strikePrice"),
+                "strikePrice": item["strikePrice"],
                 "call": {
                     "ltp": ce.get("lastPrice", 0),
                     "volume": ce.get("totalTradedVolume", 0),
