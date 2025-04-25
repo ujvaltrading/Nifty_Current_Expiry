@@ -14,11 +14,12 @@ def is_index(symbol):
 @app.route('/option-chain', methods=['GET'])
 def option_chain():
     symbol = request.args.get('symbol', 'NIFTY').upper()
+    encoded_symbol = requests.utils.quote(symbol)  # Special characters encode
     
     if is_index(symbol):
-        url = f"https://www.nseindia.com/api/option-chain-indices?symbol={symbol}"
+        url = f"https://www.nseindia.com/api/option-chain-indices?symbol={encoded_symbol}"
     else:
-        url = f"https://www.nseindia.com/api/option-chain-equities?symbol={symbol}"
+        url = f"https://www.nseindia.com/api/option-chain-equities?symbol={encoded_symbol}"
     
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -45,7 +46,6 @@ def option_chain():
                     return jsonify({"error": f"NSE API Error: {str(e)}"}), 503
                 time.sleep(retry_delay)
 
-        # ✅ डेटा प्रोसेसिंग (अब यह सही जगह पर है)
         response = {
             "underlyingValue": data["records"]["underlyingValue"],
             "expiryDates": data["records"]["expiryDates"],
