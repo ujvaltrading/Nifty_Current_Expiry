@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("searchInput");
   const suggestions = document.getElementById("suggestions");
   const symbolName = document.getElementById("stockName");
+  let currentSymbol = "NIFTY"; // ग्लोबल वेरिएबल
 
   input.addEventListener("input", () => {
     const val = input.value.toLowerCase();
@@ -12,37 +13,49 @@ document.addEventListener("DOMContentLoaded", () => {
       const li = document.createElement("li");
       li.textContent = item.name;
       li.onclick = () => {
+        currentSymbol = item.symbol; // सिम्बल अपडेट
         input.value = item.name;
         symbolName.textContent = item.symbol;
         suggestions.innerHTML = "";
-        loadLiveData(item.symbol);
+        loadLiveData(currentSymbol);
       };
       suggestions.appendChild(li);
     });
   });
 
-  async function loadLiveData(symbol) {
+  // एक्सपायरी चेंज इवेंट
+  document.getElementById("expirySelect").addEventListener("change", function() {
+    const selectedExpiry = this.value;
+    if (selectedExpiry === "Select Expiry") return;
+    loadLiveData(currentSymbol, selectedExpiry);
+  });
+
+  async function loadLiveData(symbol, expiry = "") {
     try {
-      const res = await fetch(`https://nifty-oi-calc.onrender.com/option-chain?symbol=${symbol}`);
+      let url = `https://nifty-oi-calc.onrender.com/option-chain?symbol=${symbol}`;
+      if (expiry) url += `&expiry=${encodeURIComponent(expiry)}`;
+
+      const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       
       const result = await res.json();
       
-      // CMP Update
+      // CMP अपडेट
       const cmp = result.underlyingValue || 0;
       document.getElementById("cmpValue").textContent = cmp.toFixed(2);
       document.getElementById("cmpChange").textContent = ""; 
 
-      // Expiry Dates Dropdown
+      // एक्सपायरी डेट ड्रॉपडाउन
       const expirySelect = document.getElementById("expirySelect");
       expirySelect.innerHTML = '<option>Select Expiry</option>';
       result.expiryDates.forEach(date => {
         const option = document.createElement("option");
         option.textContent = date;
+        option.value = date;
         expirySelect.appendChild(option);
       });
 
-      // Find ATM
+      // ATM ढूंढें
       let atmIndex = -1;
       let closestDiff = Infinity;
       result.optionData.forEach((row, idx) => {
@@ -53,17 +66,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
-      // Show only 11 rows around ATM
+      // सिर्फ 11 रोज़ दिखाएं (ATM ±5)
       const start = Math.max(0, atmIndex - 5);
       const end = Math.min(result.optionData.length, atmIndex + 6);
       const visibleData = result.optionData.slice(start, end);
 
-      // Update Table
+      // टेबल अपडेट
       const table = document.getElementById("optionTable");
       table.innerHTML = "";
       visibleData.forEach((row) => {
         const tr = document.createElement("tr");
-        if (row.strikePrice === result.optionData[atmIndex].strikePrice) {
+        if (row.strikePrice === result.optionData[atmIndex]?.strikePrice) {
           tr.classList.add("highlight");
         }
         tr.innerHTML = `
@@ -78,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
         table.appendChild(tr);
       });
 
-      // Trigger Prices Logic
+      // ट्रिगर प्राइस लॉजिक
       let bestRow = null;
       let highestOI = -Infinity;
       let lowestOI = Infinity;
@@ -118,5 +131,5 @@ document.addEventListener("DOMContentLoaded", () => {
     window.open(`https://in.tradingview.com/symbols/NSE-${symbol}/`, "_blank");
   };
 
-  loadLiveData("NIFTY"); // Default Load
+  loadLiveData(currentSymbol); // डिफ़ॉल्ट लोड
 });
