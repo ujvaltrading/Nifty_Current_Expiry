@@ -28,40 +28,44 @@ document.addEventListener("DOMContentLoaded", () => {
       
       const result = await res.json();
       
-      // CMP प्रोसेसिंग
+      // CMP Update
       const cmp = result.underlyingValue || 0;
       document.getElementById("cmpValue").textContent = cmp.toFixed(2);
       document.getElementById("cmpChange").textContent = ""; 
 
-      // टेबल डेटा अपडेट
-      const table = document.getElementById("optionTable");
-      table.innerHTML = "";
+      // Expiry Dates Dropdown
+      const expirySelect = document.getElementById("expirySelect");
+      expirySelect.innerHTML = '<option>Select Expiry</option>';
+      result.expiryDates.forEach(date => {
+        const option = document.createElement("option");
+        option.textContent = date;
+        expirySelect.appendChild(option);
+      });
 
+      // Find ATM
       let atmIndex = -1;
       let closestDiff = Infinity;
-      let bestRow = null;
-      let highestOI = -Infinity;
-      let lowestOI = Infinity;
-
-      // ATM और बेस्ट रो की गणना
       result.optionData.forEach((row, idx) => {
         const diff = Math.abs(row.strikePrice - cmp);
         if (diff < closestDiff) {
           closestDiff = diff;
           atmIndex = idx;
         }
-
-        if (row.call?.oiChange > highestOI && row.put?.oiChange < lowestOI) {
-          bestRow = row;
-          highestOI = row.call.oiChange;
-          lowestOI = row.put.oiChange;
-        }
       });
 
-      // टेबल भरें
-      result.optionData.forEach((row, idx) => {
+      // Show only 11 rows around ATM
+      const start = Math.max(0, atmIndex - 5);
+      const end = Math.min(result.optionData.length, atmIndex + 6);
+      const visibleData = result.optionData.slice(start, end);
+
+      // Update Table
+      const table = document.getElementById("optionTable");
+      table.innerHTML = "";
+      visibleData.forEach((row) => {
         const tr = document.createElement("tr");
-        if (idx === atmIndex) tr.classList.add("highlight");
+        if (row.strikePrice === result.optionData[atmIndex].strikePrice) {
+          tr.classList.add("highlight");
+        }
         tr.innerHTML = `
           <td>${row.call?.oiChange || 0}</td>
           <td>${row.call?.volume || 0}</td>
@@ -74,7 +78,18 @@ document.addEventListener("DOMContentLoaded", () => {
         table.appendChild(tr);
       });
 
-      // ट्रिगर प्राइस अपडेट
+      // Trigger Prices Logic
+      let bestRow = null;
+      let highestOI = -Infinity;
+      let lowestOI = Infinity;
+      result.optionData.forEach(row => {
+        if (row.call?.oiChange > highestOI && row.put?.oiChange < lowestOI) {
+          bestRow = row;
+          highestOI = row.call.oiChange;
+          lowestOI = row.put.oiChange;
+        }
+      });
+
       if (bestRow) {
         document.getElementById("autoStrike").value = bestRow.strikePrice;
         const callOI = bestRow.call?.oiChange || 0;
@@ -103,5 +118,5 @@ document.addEventListener("DOMContentLoaded", () => {
     window.open(`https://in.tradingview.com/symbols/NSE-${symbol}/`, "_blank");
   };
 
-  loadLiveData("NIFTY"); // डिफ़ॉल्ट लोड
+  loadLiveData("NIFTY"); // Default Load
 });
