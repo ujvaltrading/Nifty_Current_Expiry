@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentSymbol = "NIFTY";
   let currentExpiry = "";
 
-  // Search Functionality
+  // सर्च फ़ंक्शन
   input.addEventListener("input", () => {
     const val = input.value.toLowerCase();
     suggestions.innerHTML = "";
@@ -25,13 +25,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Expiry Date Selection
+  // एक्सपायरी चेंज इवेंट
   document.getElementById("expirySelect").addEventListener("change", function() {
     currentExpiry = this.value;
     loadLiveData(currentSymbol, currentExpiry);
   });
 
-  // Fetch and Display Data
+  // डेटा लोड करें
   async function loadLiveData(symbol, expiry = "") {
     try {
       let url = `https://nifty-oi-calc.onrender.com/option-chain?symbol=${symbol}`;
@@ -43,16 +43,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await res.json();
       if (result.error) throw new Error(result.error);
 
-      // Update CMP
+      // CMP अपडेट
       document.getElementById("cmpValue").textContent = result.underlyingValue?.toFixed(2) || "N/A";
 
-      // Update Expiry Dropdown
+      // एक्सपायरी ड्रॉपडाउन
       const expirySelect = document.getElementById("expirySelect");
       expirySelect.innerHTML = result.expiryDates.map(date => 
         `<option value="${date}" ${date === expiry ? "selected" : ""}>${date}</option>`
       ).join("");
 
-      // Find ATM Strike
+      // ATM ढूंढें
       let atmIndex = -1;
       let closestDiff = Infinity;
       result.optionData.forEach((row, idx) => {
@@ -63,12 +63,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
-      // Display 11 Rows (ATM ±5)
+      // 11 रोज़ दिखाएं (ATM ±5)
       const start = Math.max(0, atmIndex - 5);
       const end = Math.min(result.optionData.length, atmIndex + 6);
       const visibleData = result.optionData.slice(start, end);
 
-      // Populate Table
+      // टेबल अपडेट
       const table = document.getElementById("optionTable");
       table.innerHTML = visibleData.map(row => `
         <tr ${row.strikePrice === result.optionData[atmIndex]?.strikePrice ? 'class="highlight"' : ''}>
@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </tr>
       `).join("");
 
-      // Calculate Triggers
+      // PTP लॉजिक (मूल वर्ज़न)
       let bestRow = null;
       let highestCallOI = -Infinity;
       let lowestPutOI = Infinity;
@@ -96,13 +96,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (bestRow) {
         document.getElementById("autoStrike").value = bestRow.strikePrice;
-        const callLTP = bestRow.call?.ltp || 0;
-        const putLTP = bestRow.put?.ltp || 0;
-        const diff = Math.abs(highestCallOI - lowestPutOI);
-        const perc = diff / Math.max(highestCallOI, lowestPutOI) * 100 || 0;
+        const callOI = bestRow.call?.oiChange || 0;
+        const putOI = bestRow.put?.oiChange || 0;
+        const diff = Math.abs(callOI - putOI);
+        const perc = diff / Math.max(callOI, putOI) * 100 || 0;
 
-        document.getElementById("buyTrigger").value = (callLTP - (callLTP * perc / 100)).toFixed(2);
-        document.getElementById("sellTrigger").value = (putLTP - (putLTP * perc / 100)).toFixed(2);
+        // मूल PTP कैलकुलेशन
+        if (callOI < putOI) {
+          document.getElementById("buyTrigger").value = (bestRow.call?.ltp - (bestRow.call?.ltp * perc / 100)).toFixed(2) || "N/A";
+          document.getElementById("sellTrigger").value = "No Trade found";
+        } else {
+          document.getElementById("sellTrigger").value = (bestRow.put?.ltp - (bestRow.put?.ltp * perc / 100)).toFixed(2) || "N/A";
+          document.getElementById("buyTrigger").value = "No Trade found";
+        }
       }
 
     } catch (error) {
@@ -110,6 +116,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Initial Load
+  // डिफ़ॉल्ट लोड
   loadLiveData(currentSymbol);
 });
