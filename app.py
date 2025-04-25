@@ -16,7 +16,7 @@ def option_chain():
     symbol = request.args.get('symbol', 'NIFTY').upper()
     expiry = request.args.get('expiry', '')
     
-    # URL Encoding for special characters (e.g., M&M → M%26M)
+    # विशेष करैक्टर एन्कोडिंग (जैसे M&M → M%26M)
     encoded_symbol = requests.utils.quote(symbol)
     
     if is_index(symbol):
@@ -43,12 +43,12 @@ def option_chain():
                 res.raise_for_status()
                 data = res.json()
                 break
-            except requests.exceptions.RequestException:
+            except requests.exceptions.RequestException as e:
                 if attempt == max_retries - 1:
-                    return jsonify({"error": "NSE API Unreachable"}), 503
+                    return jsonify({"error": f"NSE API Error: {str(e)}"}), 503
                 time.sleep(3)
 
-        # Filter data by expiry
+        # एक्सपायरी डेट फ़िल्टर
         filtered_data = []
         for item in data["records"]["data"]:
             if expiry and item.get("expiryDate") != expiry:
