@@ -2,48 +2,181 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Helpola - LTP PTP Calculator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Options Target & Stoploss Calculator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      background-image: url('ChatGPT%20Image%20Jun%2013,%202025,%2008_18_12%20AM.png');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-attachment: fixed;
+      backdrop-filter: blur(6px);
+    }
+    .overlay {
+      background: rgba(255, 255, 255, 0.85);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      flex-direction: column;
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      padding: 2rem;
+      backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 2;
+    }
+    h2 {
+      text-align: center;
+      color: #007bff;
+      margin-bottom: 1rem;
+    }
+    label {
+      font-weight: 600;
+      margin-top: 1rem;
+      display: block;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      margin-top: 0.25rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 0.9rem;
+      background-color: #28a745;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .result {
+      margin-top: 1.5rem;
+      background: #e9f7ff;
+      border: 1px solid #91d5ff;
+      padding: 1.25rem;
+      border-radius: 10px;
+      color: #004085;
+      font-size: 1rem;
+    }
+    .disclaimer {
+      font-size: 0.85rem;
+      color: #333;
+      margin-top: 1rem;
+      text-align: center;
+      padding: 1rem;
+      background: rgba(255,255,255,0.95);
+      max-width: 100%;
+      border-top: 1px solid #ccc;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div class="title">OPTIONS TRADING – <span id="stockName">NIFTY 50</span></div>
-      <select id="expirySelect" class="expiry-select">
-        <option>expiry here</option>
-      </select>
+  <div class="overlay">
+    <div class="container">
+      <h2>Options Target & Stoploss Calculator</h2>
+      <label for="cmp">Current Market Price (CMP)</label>
+      <input type="number" id="cmp" placeholder="e.g., 25005">
+
+      <label for="atm">ATM Strike Price</label>
+      <input type="number" id="atm" placeholder="e.g., 25000">
+
+      <label for="ltp">Current Option LTP (Premium)</label>
+      <input type="number" id="ltp" placeholder="e.g., 101">
+
+      <label for="targetMarket">Target Market Price</label>
+      <input type="number" id="targetMarket" placeholder="e.g., 25500">
+
+      <label for="stopMarket">Expected Market Price for Stoploss</label>
+      <input type="number" id="stopMarket" placeholder="e.g., 24900">
+
+      <label for="capital">Your Capital (₹)</label>
+      <input type="number" id="capital" placeholder="e.g., 10000">
+
+      <label for="lotSize">Lot Size (e.g., NIFTY = 75)</label>
+      <input type="number" id="lotSize" value="75">
+
+      <button onclick="calculateOptionSLTP()">Calculate</button>
+
+      <div class="result" id="result"></div>
     </div>
-    <div class="search-section">
-      <input type="text" id="searchInput" placeholder="🔍 Search Stock or Index Name..." autocomplete="off" />
-      <ul id="suggestions"></ul>
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> This tool is for educational and informational purposes only. It does not constitute investment advice. Trading in the stock or derivatives market involves financial risk. Please consult with your financial advisor before making any trading decisions. The developer of this app is not responsible for any profit or loss incurred.
     </div>
-    <div class="cmp-line">
-      <div class="live-data-info">
-      </div>
-      <span id="cmpValue">Sample CMP 19860.25</span> <span id="cmpChange">+115.75 (+0.59%)</span>
-    </div>
-    <div class="info-row">
-      <input type="text" id="autoStrike" readonly placeholder="Auto Strike" />
-      <button onclick="openTV()">📈 View Chart</button>
-    </div>
-    <div class="trigger-box">
-      <input id="buyTrigger" readonly placeholder="BUY TRIGGER" />
-      <input id="sellTrigger" readonly placeholder="SELL TRIGGER" />
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th>CALL OI CHG</th><th>CALL VOL</th><th>CALL LTP</th>
-          <th>STRIKE</th>
-          <th>PUT LTP</th><th>PUT VOL</th><th>PUT OI CHG</th>
-        </tr>
-      </thead>
-      <tbody id="optionTable"></tbody>
-    </table>
   </div>
-  <script src="symbolMap.js"></script>
-  <script src="script.js"></script>
+
+  <script>
+    function calculateOptionSLTP() {
+      const cmp = parseFloat(document.getElementById('cmp').value);
+      const atm = parseFloat(document.getElementById('atm').value);
+      const ltp = parseFloat(document.getElementById('ltp').value);
+      const targetMarket = parseFloat(document.getElementById('targetMarket').value);
+      const stopMarket = parseFloat(document.getElementById('stopMarket').value);
+      const capital = parseFloat(document.getElementById('capital').value);
+      const lotSize = parseInt(document.getElementById('lotSize').value);
+      const result = document.getElementById('result');
+
+      if ([cmp, atm, ltp, targetMarket, stopMarket, capital, lotSize].some(isNaN)) {
+        result.innerHTML = '<strong>Please fill in all values correctly.</strong>';
+        return;
+      }
+
+      const direction = cmp < targetMarket ? 'CALL' : 'PUT';
+      const priceDiffTarget = Math.abs(targetMarket - cmp);
+      const priceDiffStop = Math.abs(cmp - stopMarket);
+
+      const premiumTarget = direction === 'CALL'
+        ? ltp + priceDiffTarget
+        : ltp - priceDiffTarget;
+
+      const premiumStop = direction === 'CALL'
+        ? ltp - priceDiffStop
+        : ltp + priceDiffStop;
+
+      const stopLossPerUnit = Math.abs(ltp - premiumStop);
+      const riskPerLot = stopLossPerUnit * lotSize;
+      const maxLots = Math.floor(capital / riskPerLot);
+      const totalQty = maxLots * lotSize;
+
+      const totalRisk = (stopLossPerUnit * totalQty).toFixed(2);
+      const totalReward = (Math.abs(premiumTarget - ltp) * totalQty).toFixed(2);
+      const rrRatio = (Math.abs(premiumTarget - ltp) / stopLossPerUnit).toFixed(2);
+
+      result.innerHTML = `
+        <strong>Trade Analysis:</strong><br>
+        Type: ${direction}<br>
+        CMP: ₹${cmp} | ATM: ₹${atm} | Option LTP: ₹${ltp}<br>
+        Target Premium: ₹${premiumTarget.toFixed(2)}<br>
+        Stoploss Premium: ₹${premiumStop.toFixed(2)}<br>
+        Stoploss/Unit: ₹${stopLossPerUnit.toFixed(2)}<br>
+        Lot Size: ${lotSize} | Max Lots: ${maxLots}<br>
+        Total Quantity: ${totalQty}<br>
+        Total Risk: ₹${totalRisk}<br>
+        Total Potential Reward: ₹${totalReward}<br>
+        Risk:Reward Ratio: ${rrRatio} : 1
+      `;
+    }
+  </script>
 </body>
 </html>
