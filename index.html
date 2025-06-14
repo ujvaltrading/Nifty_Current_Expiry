@@ -3,179 +3,217 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Options Target & Stoploss Calculator</title>
+  <title>Advanced Options Target & Stoploss Calculator</title>
   <style>
-    body {
+    :root {
+      --primary: #1e88e5;
+      --secondary: #0d47a1;
+      --accent: #e3f2fd;
+      --success: #c8e6c9;
+      --danger: #ffcdd2;
+      --bg: #f4f6f8;
+      --radius: 16px;
+      --font: 'Segoe UI', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f6f9;
-      background-image: url('ChatGPT%20Image%20Jun%2013,%202025,%2008_18_12%20AM.png');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: center;
-      background-attachment: fixed;
-      backdrop-filter: blur(6px);
     }
-    .overlay {
-      background: rgba(255, 255, 255, 0.85);
+
+    body {
+      font-family: var(--font);
+      background: var(--bg) url('ChatGPT Image Jun 13, 2025, 08_18_12 AM.png') no-repeat center center/cover;
+      backdrop-filter: blur(6px);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2rem 1rem;
-      flex-direction: column;
-    }
-    .container {
-      width: 100%;
-      max-width: 600px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
       padding: 2rem;
-      backdrop-filter: blur(10px);
-      position: relative;
-      z-index: 2;
     }
+
+    .app {
+      background: white;
+      padding: 2rem;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+    }
+
     h2 {
       text-align: center;
-      color: #007bff;
-      margin-bottom: 1rem;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
     }
+
     label {
       font-weight: 600;
-      margin-top: 1rem;
       display: block;
+      margin: 1rem 0 0.25rem;
     }
-    input {
+
+    input, select {
       width: 100%;
-      padding: 0.75rem;
-      font-size: 1rem;
-      margin-top: 0.25rem;
-      margin-bottom: 1rem;
+      padding: 0.7rem;
       border-radius: 8px;
       border: 1px solid #ccc;
+      font-size: 1rem;
     }
+
     button {
       width: 100%;
-      padding: 0.9rem;
-      background-color: #28a745;
+      background: var(--primary);
       color: white;
-      font-size: 1rem;
-      font-weight: bold;
+      padding: 0.75rem;
       border: none;
       border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    button:hover {
-      background-color: #218838;
-    }
-    .result {
-      margin-top: 1.5rem;
-      background: #e9f7ff;
-      border: 1px solid #91d5ff;
-      padding: 1.25rem;
-      border-radius: 10px;
-      color: #004085;
       font-size: 1rem;
+      font-weight: bold;
+      margin-top: 1.5rem;
+      cursor: pointer;
     }
-    .disclaimer {
-      font-size: 0.85rem;
-      color: #333;
-      margin-top: 1rem;
+
+    button:hover {
+      background: var(--secondary);
+    }
+
+    .result-modal {
+      margin-top: 2rem;
+      background: var(--accent);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      display: none;
+      position: relative;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    .result-modal h3 {
+      color: var(--secondary);
+      margin-bottom: 1rem;
+    }
+
+    .highlight {
+      background-color: var(--success);
+      padding: 0.5rem;
+      border-radius: 6px;
+      margin: 0.5rem 0;
+      font-weight: bold;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      background: #ddd;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
       text-align: center;
-      padding: 1rem;
-      background: rgba(255,255,255,0.95);
-      max-width: 100%;
-      border-top: 1px solid #ccc;
+      line-height: 24px;
+    }
+
+    .disclaimer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      text-align: center;
+      color: #666;
     }
   </style>
 </head>
 <body>
-  <div class="overlay">
-    <div class="container">
-      <h2>Options Target & Stoploss Calculator</h2>
-      <label for="cmp">Current Market Price (CMP)</label>
-      <input type="number" id="cmp" placeholder="e.g., 25005">
+  <div class="app">
+    <h2>Options Target & Stoploss Calculator</h2>
 
-      <label for="atm">ATM Strike Price</label>
-      <input type="number" id="atm" placeholder="e.g., 25000">
+    <label for="cmp">Current Market Price (CMP)</label>
+    <input type="number" id="cmp" onchange="autoATM()" placeholder="e.g. 25005" />
 
-      <label for="ltp">Current Option LTP (Premium)</label>
-      <input type="number" id="ltp" placeholder="e.g., 101">
+    <label for="atm">ATM Strike Price</label>
+    <input type="number" id="atm" placeholder="Auto-filled, editable" />
 
-      <label for="targetMarket">Target Market Price</label>
-      <input type="number" id="targetMarket" placeholder="e.g., 25500">
+    <label for="ltp">Current LTP Premium (₹)</label>
+    <input type="number" id="ltp" placeholder="e.g. 120" />
 
-      <label for="stopMarket">Expected Market Price for Stoploss</label>
-      <input type="number" id="stopMarket" placeholder="e.g., 24900">
+    <label for="target">Expected Target Market Price</label>
+    <input type="number" id="target" placeholder="e.g. 25500" />
 
-      <label for="capital">Your Capital (₹)</label>
-      <input type="number" id="capital" placeholder="e.g., 10000">
+    <label for="stop">Expected Stoploss Market Price</label>
+    <input type="number" id="stop" placeholder="e.g. 24900" />
 
-      <label for="lotSize">Lot Size (e.g., NIFTY = 75)</label>
-      <input type="number" id="lotSize" value="75">
+    <label for="lot">Select Lot Size</label>
+    <select id="lot">
+      <option value="75">Nifty (75)</option>
+      <option value="50">BankNifty (50)</option>
+      <option value="15">FinNifty (15)</option>
+      <option value="40">Reliance (40)</option>
+      <option value="100">HDFC Bank (100)</option>
+      <option value="550">Zomato (550)</option>
+      <option value="300">TCS (300)</option>
+      <option value="500">Infosys (500)</option>
+    </select>
 
-      <button onclick="calculateOptionSLTP()">Calculate</button>
+    <button onclick="calculate()">Calculate</button>
 
-      <div class="result" id="result"></div>
+    <div class="result-modal" id="resultBox">
+      <div class="close-btn" onclick="this.parentElement.style.display='none'">×</div>
+      <h3>Calculation Results</h3>
+      <div id="result"></div>
     </div>
+
     <div class="disclaimer">
-      <strong>Disclaimer:</strong> This tool is for educational and informational purposes only. It does not constitute investment advice. Trading in the stock or derivatives market involves financial risk. Please consult with your financial advisor before making any trading decisions. The developer of this app is not responsible for any profit or loss incurred.
+      ⚠️ Disclaimer: This app is for educational purposes only. Trading involves risk. Consult a financial advisor before making investment decisions.
     </div>
   </div>
 
   <script>
-    function calculateOptionSLTP() {
-      const cmp = parseFloat(document.getElementById('cmp').value);
-      const atm = parseFloat(document.getElementById('atm').value);
-      const ltp = parseFloat(document.getElementById('ltp').value);
-      const targetMarket = parseFloat(document.getElementById('targetMarket').value);
-      const stopMarket = parseFloat(document.getElementById('stopMarket').value);
-      const capital = parseFloat(document.getElementById('capital').value);
-      const lotSize = parseInt(document.getElementById('lotSize').value);
-      const result = document.getElementById('result');
+    function autoATM() {
+      const cmp = parseFloat(document.getElementById("cmp").value);
+      if (!isNaN(cmp)) {
+        document.getElementById("atm").value = Math.round(cmp / 100) * 100;
+      }
+    }
 
-      if ([cmp, atm, ltp, targetMarket, stopMarket, capital, lotSize].some(isNaN)) {
-        result.innerHTML = '<strong>Please fill in all values correctly.</strong>';
+    function calculate() {
+      const cmp = parseFloat(document.getElementById("cmp").value);
+      const atm = parseFloat(document.getElementById("atm").value);
+      const ltp = parseFloat(document.getElementById("ltp").value);
+      const target = parseFloat(document.getElementById("target").value);
+      const stop = parseFloat(document.getElementById("stop").value);
+      const lot = parseInt(document.getElementById("lot").value);
+
+      if ([cmp, atm, ltp, target, stop].some(isNaN)) {
+        alert("Please fill in all fields correctly.");
         return;
       }
 
-      const direction = cmp < targetMarket ? 'CALL' : 'PUT';
-      const priceDiffTarget = Math.abs(targetMarket - cmp);
-      const priceDiffStop = Math.abs(cmp - stopMarket);
+      const deltaFactor = 0.5;
+      const moveUp = target - cmp;
+      const moveDown = cmp - stop;
 
-      const premiumTarget = direction === 'CALL'
-        ? ltp + priceDiffTarget
-        : ltp - priceDiffTarget;
+      const targetPremium = ltp + (moveUp * deltaFactor);
+      const stopPremium = ltp - (moveDown * deltaFactor);
 
-      const premiumStop = direction === 'CALL'
-        ? ltp - priceDiffStop
-        : ltp + priceDiffStop;
+      const investment = ltp * lot;
+      const profit = (targetPremium - ltp) * lot;
+      const loss = (ltp - stopPremium) * lot;
 
-      const stopLossPerUnit = Math.abs(ltp - premiumStop);
-      const riskPerLot = stopLossPerUnit * lotSize;
-      const maxLots = Math.floor(capital / riskPerLot);
-      const totalQty = maxLots * lotSize;
-
-      const totalRisk = (stopLossPerUnit * totalQty).toFixed(2);
-      const totalReward = (Math.abs(premiumTarget - ltp) * totalQty).toFixed(2);
-      const rrRatio = (Math.abs(premiumTarget - ltp) / stopLossPerUnit).toFixed(2);
-
-      result.innerHTML = `
-        <strong>Trade Analysis:</strong><br>
-        Type: ${direction}<br>
-        CMP: ₹${cmp} | ATM: ₹${atm} | Option LTP: ₹${ltp}<br>
-        Target Premium: ₹${premiumTarget.toFixed(2)}<br>
-        Stoploss Premium: ₹${premiumStop.toFixed(2)}<br>
-        Stoploss/Unit: ₹${stopLossPerUnit.toFixed(2)}<br>
-        Lot Size: ${lotSize} | Max Lots: ${maxLots}<br>
-        Total Quantity: ${totalQty}<br>
-        Total Risk: ₹${totalRisk}<br>
-        Total Potential Reward: ₹${totalReward}<br>
-        Risk:Reward Ratio: ${rrRatio} : 1
+      const resultHTML = `
+        <div class="highlight">Target Premium: ₹${targetPremium.toFixed(2)}</div>
+        <div class="highlight">Stoploss Premium: ₹${stopPremium.toFixed(2)}</div>
+        <p><strong>Target Return %:</strong> ${(100 * (targetPremium - ltp) / ltp).toFixed(2)}%</p>
+        <p><strong>Stoploss %:</strong> ${(100 * (ltp - stopPremium) / ltp).toFixed(2)}%</p>
+        <hr>
+        <p><strong>Total Investment (1 lot):</strong> ₹${investment.toFixed(2)}</p>
+        <p><strong>Expected Profit:</strong> ₹${profit.toFixed(2)}</p>
+        <p><strong>Expected Loss:</strong> ₹${loss.toFixed(2)}</p>
       `;
+
+      document.getElementById("result").innerHTML = resultHTML;
+      document.getElementById("resultBox").style.display = 'block';
     }
   </script>
 </body>
