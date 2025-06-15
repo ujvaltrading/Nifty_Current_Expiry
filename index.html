@@ -28,6 +28,7 @@
       backdrop-filter: blur(6px);
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 2rem;
@@ -40,7 +41,6 @@
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
       width: 100%;
       max-width: 480px;
-      position: relative;
     }
 
     h2 {
@@ -80,48 +80,46 @@
       background: var(--secondary);
     }
 
-    .result-modal {
+    .footer {
       margin-top: 2rem;
-      background: var(--accent);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      display: none;
-      position: relative;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      font-size: 0.85rem;
+      color: #555;
+      max-width: 480px;
+      width: 100%;
     }
 
-    .result-modal h3 {
-      color: var(--secondary);
-      margin-bottom: 1rem;
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+      margin: 0 10px;
     }
 
-    .highlight {
-      background-color: var(--success);
-      padding: 0.5rem;
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .exit-btn {
+      margin-top: 1rem;
+      background: #d32f2f;
+      color: white;
+      padding: 0.5rem 1.5rem;
+      border: none;
       border-radius: 6px;
-      margin: 0.5rem 0;
-      font-weight: bold;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: 8px;
-      right: 12px;
       cursor: pointer;
-      font-weight: bold;
-      background: #ddd;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      text-align: center;
-      line-height: 24px;
     }
 
-    .disclaimer {
-      margin-top: 2rem;
-      font-size: 0.8rem;
-      text-align: center;
-      color: #666;
+    .exit-btn:hover {
+      background-color: #b71c1c;
+    }
+
+    @media (max-width: 600px) {
+      .app, .footer {
+        padding: 1rem;
+      }
+      input, select, button {
+        font-size: 0.9rem;
+      }
     }
   </style>
 </head>
@@ -375,16 +373,16 @@
     </select>
 
     <button onclick="calculate()">Calculate</button>
+  </div>
 
-    <div class="result-modal" id="resultBox">
-      <div class="close-btn" onclick="this.parentElement.style.display='none'">×</div>
-      <h3>Calculation Results</h3>
-      <div id="result"></div>
+  <div class="footer">
+    <p>⚠️ Disclaimer: This app is for educational purposes only. Trading involves risk. Consult a financial advisor before making investment decisions.</p>
+    <div>
+      <a href="https://sites.google.com/view/ltpcalculatorsaboutus/home" target="_blank">About Us</a> |
+      <a href="https://sites.google.com/view/ltpcalculators/home" target="_blank">Privacy Policy</a> |
+      <a href="https://sites.google.com/view/ltpcalculatorstermcondition/home" target="_blank">Terms & Conditions</a>
     </div>
-
-    <div class="disclaimer">
-      ⚠️ Disclaimer: This app is for educational purposes only. Trading involves risk. Consult a financial advisor before making investment decisions.
-    </div>
+    <button class="exit-btn" onclick="exitApp()">Exit App</button>
   </div>
 
   <script>
@@ -420,18 +418,40 @@
       const loss = (ltp - stopPremium) * lot;
 
       const resultHTML = `
-        <div class="highlight">Target Premium: ₹${targetPremium.toFixed(2)}</div>
-        <div class="highlight">Stoploss Premium: ₹${stopPremium.toFixed(2)}</div>
-        <p><strong>Target Return %:</strong> ${(100 * (targetPremium - ltp) / ltp).toFixed(2)}%</p>
-        <p><strong>Stoploss %:</strong> ${(100 * (ltp - stopPremium) / ltp).toFixed(2)}%</p>
-        <hr>
-        <p><strong>Total Investment (1 lot):</strong> ₹${investment.toFixed(2)}</p>
-        <p><strong>Expected Profit:</strong> ₹${profit.toFixed(2)}</p>
-        <p><strong>Expected Loss:</strong> ₹${loss.toFixed(2)}</p>
+        <html>
+        <head>
+          <title>Calculation Results</title>
+          <style>
+            body { font-family: Arial; padding: 20px; }
+            .highlight { background-color: #c8e6c9; padding: 10px; border-radius: 6px; margin: 10px 0; font-weight: bold; }
+            button { margin-top: 20px; padding: 10px 20px; background-color: #d32f2f; color: white; border: none; border-radius: 6px; cursor: pointer; }
+          </style>
+        </head>
+        <body>
+          <h2>Calculation Results</h2>
+          <div class="highlight">Target Premium: ₹${targetPremium.toFixed(2)}</div>
+          <div class="highlight">Stoploss Premium: ₹${stopPremium.toFixed(2)}</div>
+          <p><strong>Target Return %:</strong> ${(100 * (targetPremium - ltp) / ltp).toFixed(2)}%</p>
+          <p><strong>Stoploss %:</strong> ${(100 * (ltp - stopPremium) / ltp).toFixed(2)}%</p>
+          <hr>
+          <p><strong>Total Investment (1 lot):</strong> ₹${investment.toFixed(2)}</p>
+          <p><strong>Expected Profit:</strong> ₹${profit.toFixed(2)}</p>
+          <p><strong>Expected Loss:</strong> ₹${loss.toFixed(2)}</p>
+          <button onclick="window.close()">Close</button>
+        </body>
+        </html>
       `;
 
-      document.getElementById("result").innerHTML = resultHTML;
-      document.getElementById("resultBox").style.display = 'block';
+      const resultWindow = window.open("", "Calculation Results", "width=400,height=500");
+      resultWindow.document.write(resultHTML);
+      resultWindow.document.close();
+    }
+
+    function exitApp() {
+      if (confirm("Are you sure you want to exit the app?")) {
+        window.open('', '_self');
+        window.close();
+      }
     }
   </script>
 </body>
