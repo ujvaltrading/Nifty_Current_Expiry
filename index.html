@@ -421,40 +421,43 @@
         <html>
         <head>
           <title>Calculation Results</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
-            body {
-    font-family: Arial, sans-serif;
-    padding: 1rem;
-    margin: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-    word-wrap: break-word;
-  }
-  .highlight {
-    background-color: #c8e6c9;
-    padding: 1rem;
-    border-radius: 6px;
-    margin: 1rem 0;
-    font-weight: bold;
-    font-size: 1rem;
-  }
-  p, h2 {
-    font-size: 1rem;
-    line-height: 1.5;
-  }
-  button {
-    margin-top: 2rem;
-    padding: 0.75rem 1.5rem;
-    background-color: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-  button:hover {
-    background-color: #b71c1c;
-  }
+            html, body {
+              margin: 0;
+              padding: 1rem;
+              font-family: Arial, sans-serif;
+              max-width: 100%;
+              box-sizing: border-box;
+              word-wrap: break-word;
+            }
+            .highlight {
+              background-color: #c8e6c9;
+              padding: 1rem;
+              border-radius: 6px;
+              margin: 1rem 0;
+              font-weight: bold;
+              font-size: 1rem;
+            }
+            p, h2 {
+              font-size: 1rem;
+              line-height: 1.5;
+            }
+            button {
+              margin-top: 2rem;
+              padding: 0.75rem 1.5rem;
+              background-color: #d32f2f;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              cursor: pointer;
+              font-size: 1rem;
+              display: block;
+              width: fit-content;
+            }
+            button:hover {
+              background-color: #b71c1c;
+            }
           </style>
         </head>
         <body>
@@ -472,7 +475,7 @@
         </html>
       `;
 
-      const resultWindow = window.open("", "Calculation Results", "width=1000,height=600,resizable=yes,scrollbars=yes");
+      const resultWindow = window.open("", "Calculation Results", "width=100%,height=100%,left=0,top=0,resizable=yes,scrollbars=yes");
       resultWindow.document.write(resultHTML);
       resultWindow.document.close();
     }
