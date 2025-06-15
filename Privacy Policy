@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Privacy Policy - LTP Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f9f9f9;
+      padding: 40px;
+      max-width: 800px;
+      margin: auto;
+      line-height: 1.8;
+      color: #333;
+    }
+    h1, h2 {
+      color: #2c3e50;
+    }
+    a {
+      color: #3498db;
+    }
+    strong {
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p>This privacy policy applies to the <strong>LTP Calculator</strong> app (hereby referred to as "Application") for mobile devices that was created by <strong>Ujval Dharawaparmar</strong> (hereby referred to as "Service Provider") as a Free service. This service is intended for use "AS IS".</p>
+
+  <h2>Information Collection and Use</h2>
+  <p>The Application collects information when you download and use it. This information may include:</p>
+  <ul>
+    <li>Your device's Internet Protocol address (e.g. IP address)</li>
+    <li>The pages of the Application that you visit, the time and date of your visit, and time spent</li>
+    <li>The operating system you use on your mobile device</li>
+  </ul>
+  <p>The Application does not gather precise information about the location of your mobile device.</p>
+  <p>The Service Provider may use the information you provided to contact you from time to time to provide you with important information, required notices, and marketing promotions.</p>
+  <p>For a better experience, while using the Application, the Service Provider may require you to provide personally identifiable information. This information will be retained and used as described in this privacy policy.</p>
+
+  <h2>Third Party Access</h2>
+  <p>Only aggregated, anonymized data is periodically transmitted to external services to aid the Service Provider in improving the Application and service.</p>
+  <p>The Application uses third-party services that have their own privacy policies:</p>
+  <ul>
+    <li><a href="https://policies.google.com/privacy" target="_blank">Google Play Services</a></li>
+  </ul>
+  <p>The Service Provider may disclose information:</p>
+  <ul>
+    <li>As required by law or legal processes</li>
+    <li>To protect rights, safety, or investigate fraud</li>
+    <li>To trusted service providers under confidentiality agreements</li>
+  </ul>
+
+  <h2>Opt-Out Rights</h2>
+  <p>You can stop all collection of information by uninstalling the Application at any time.</p>
+
+  <h2>Data Retention Policy</h2>
+  <p>The Service Provider will retain data for as long as you use the Application and for a reasonable time afterward. To request deletion of your data, please contact <a href="mailto:ujvaltrading@gmail.com">ujvaltrading@gmail.com</a>.</p>
+
+  <h2>Children</h2>
+  <p>The Application does not knowingly collect data from children under 13. If you believe your child has provided personal information, please contact <a href="mailto:ujvaltrading@gmail.com">ujvaltrading@gmail.com</a> immediately.</p>
+
+  <h2>Security</h2>
+  <p>The Service Provider values your trust and uses standard security measures to protect your data.</p>
+
+  <h2>Changes</h2>
+  <p>This policy may be updated from time to time. You are advised to review this page periodically. Continued use of the Application after changes indicates your consent.</p>
+
+  <p><strong>This policy is effective as of 2025-06-15.</strong></p>
+
+  <h2>Your Consent</h2>
+  <p>By using the Application, you agree to the processing of your information as outlined in this policy.</p>
+
+  <h2>Contact Us</h2>
+  <p>If you have any questions, please contact: <a href="mailto:ujvaltrading@gmail.com">ujvaltrading@gmail.com</a></p>
+</body>
+</html>
