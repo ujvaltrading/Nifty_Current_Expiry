@@ -3,489 +3,275 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Advanced Options Target & Stoploss Calculator</title>
+  <title>Nifty 50 Option Chain</title>
   <style>
     :root {
-      --primary: #1e88e5;
-      --secondary: #0d47a1;
-      --accent: #e3f2fd;
-      --success: #c8e6c9;
-      --danger: #ffcdd2;
-      --bg: #f4f6f8;
-      --radius: 16px;
-      --font: 'Segoe UI', sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+      --header-bg: #003366;
+      --subheader-bg: #0059b3;
+      --call-bg: #e8f4fd;
+      --put-bg: #fdecea;
+      --strike-bg: #fff3cd;
+      --atm-bg: #ffecb3; /* Soft golden background for ATM */
+      --atm-shadow: rgba(0, 0, 0, 0.25);
+      --positive: #006400;
+      --negative: #c62828;
     }
 
     body {
-      font-family: var(--font);
-      background: var(--bg) url('ChatGPT Image Jun 13, 2025, 08_18_12 AM.png') no-repeat center center/cover;
-      backdrop-filter: blur(6px);
-      min-height: 100vh;
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 2rem;
+      padding: 1rem;
     }
 
-    .app {
-      background: white;
-      padding: 2rem;
-      border-radius: var(--radius);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    .container {
       width: 100%;
-      max-width: 480px;
+      max-width: 1600px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
     }
 
-    h2 {
+    h1 {
+      margin: 0;
+      background: var(--header-bg);
+      color: #fff;
       text-align: center;
-      color: var(--primary);
-      margin-bottom: 1.5rem;
+      padding: 15px;
+      font-size: 1.8rem;
     }
 
-    label {
-      font-weight: 600;
-      display: block;
-      margin: 1rem 0 0.25rem;
+    .table-wrapper {
+      overflow: auto;
+      max-height: 80vh;
+      scroll-behavior: smooth;
     }
 
-    input, select {
-      width: 100%;
-      padding: 0.7rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
+    table {
+      border-collapse: collapse;
+      width: max-content;
+      margin: auto;
     }
 
-    button {
-      width: 100%;
-      background: var(--primary);
-      color: white;
-      padding: 0.75rem;
-      border: none;
-      border-radius: 8px;
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    thead tr:first-child th {
+      background: var(--header-bg);
+      color: #fff;
       font-size: 1rem;
       font-weight: bold;
-      margin-top: 1.5rem;
-      cursor: pointer;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
-    button:hover {
-      background: var(--secondary);
+    thead tr:nth-child(2) th {
+      background: var(--subheader-bg);
+      color: #fff;
+      font-size: 0.85rem;
+      position: sticky;
+      top: 50px;
+      z-index: 9;
     }
 
-    .footer {
-      margin-top: 2rem;
-      text-align: center;
+    .call-heading {
+      background: #2196f3;
+      color: #fff;
+    }
+
+    .put-heading {
+      background: #f44336;
+      color: #fff;
+    }
+
+    .strike-heading {
+      background: var(--strike-bg);
+      color: #000;
+      font-weight: bold;
+    }
+
+    .atm-row {
+      background-color: var(--atm-bg) !important;
+      color: #000 !important;
+      font-weight: bold;
+      box-shadow: inset 0 0 10px var(--atm-shadow), 0 0 8px var(--atm-shadow);
+      border: 2px solid #ffc107;
+      transition: all 0.3s ease;
+    }
+
+    .call-cell {
+      background-color: var(--call-bg);
+    }
+
+    .put-cell {
+      background-color: var(--put-bg);
+    }
+
+    .strike-cell {
+      background-color: var(--strike-bg);
+      font-weight: bold;
+    }
+
+    .negative {
+      color: var(--negative);
+      font-weight: bold;
+    }
+
+    .positive {
+      color: var(--positive);
+    }
+
+    .disclaimer {
+      margin-top: 1rem;
       font-size: 0.85rem;
       color: #555;
-      max-width: 480px;
-      width: 100%;
+      text-align: center;
+      max-width: 900px;
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
-    .footer a {
-      color: var(--primary);
-      text-decoration: none;
-      margin: 0 10px;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
-    }
-
-    .exit-btn {
-      margin-top: 1rem;
-      background: #d32f2f;
-      color: white;
-      padding: 0.5rem 1.5rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .exit-btn:hover {
-      background-color: #b71c1c;
-    }
-
-    @media (max-width: 600px) {
-      .app, .footer {
-        padding: 1rem;
+    @media (max-width: 768px) {
+      th, td {
+        font-size: 0.8rem;
+        padding: 6px;
       }
-      input, select, button {
-        font-size: 0.9rem;
+
+      h1 {
+        font-size: 1.4rem;
       }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <h2>Options Target & Stoploss Calculator</h2>
-
-    <label for="cmp">Current Market Price (CMP)</label>
-    <input type="number" id="cmp" onchange="autoATM()" placeholder="e.g. 25005" />
-
-    <label for="atm">ATM Strike Price</label>
-    <input type="number" id="atm" placeholder="Auto-filled, editable" />
-
-    <label for="ltp">Current LTP Premium (₹)</label>
-    <input type="number" id="ltp" placeholder="e.g. 120" />
-
-    <label for="target">Expected Target Market Price</label>
-    <input type="number" id="target" placeholder="e.g. 25500" />
-
-    <label for="stop">Expected Stoploss Market Price</label>
-    <input type="number" id="stop" placeholder="e.g. 24900" />
-
-    <label for="lot">Select Lot Size</label>
-    <select id="lot">
-<option value="30">BANKNIFTY (30)</option>
-<option value="65">FINNIFTY (65)</option>
-<option value="120">MIDCPNIFTY (120)</option>
-<option value="75">NIFTY (75)</option>
-<option value="25">NIFTY NEXT 50 (25)</option>
-<option value="1000">AARTIIND (1000)</option>
-<option value="125">ABB (125)</option>
-<option value="2700">ABCAPITAL (2700)</option>
-<option value="2600">ABFRL (2600)</option>
-<option value="300">ACC (300)</option>
-<option value="625">ADANIENSOL (625)</option>
-<option value="300">ADANIENT (300)</option>
-<option value="375">ADANIGREEN (375)</option>
-<option value="400">ADANIPORTS (400)</option>
-<option value="100">ALKEM (100)</option>
-<option value="900">AMBUJACEM (900)</option>
-<option value="200">ANGELONE (200)</option>
-<option value="350">APLAPOLLO (350)</option>
-<option value="125">APOLLOHOSP (125)</option>
-<option value="2500">ASHOKLEY (2500)</option>
-<option value="200">ASIANPAINT (200)</option>
-<option value="367">ASTRAL (367)</option>
-<option value="775">ATGL (775)</option>
-<option value="1000">AUBANK (1000)</option>
-<option value="550">AUROPHARMA (550)</option>
-<option value="625">AXISBANK (625)</option>
-<option value="75">BAJAJ-AUTO (75)</option>
-<option value="500">BAJAJFINSV (500)</option>
-<option value="1250">BAJFINANCE (1250)</option>
-<option value="300">BALKRISIND (300)</option>
-<option value="2800">BANDHANBNK (2800)</option>
-<option value="2925">BANKBARODA (2925)</option>
-<option value="4825">BANKINDIA (4825)</option>
-<option value="325">BDL (325)</option>
-<option value="2850">BEL (2850)</option>
-<option value="500">BHARATFORG (500)</option>
-<option value="475">BHARTIARTL (475)</option>
-<option value="2625">BHEL (2625)</option>
-<option value="2500">BIOCON (2500)</option>
-<option value="325">BLUESTARCO (325)</option>
-<option value="25">BOSCHLTD (25)</option>
-<option value="1800">BPCL (1800)</option>
-<option value="100">BRITANNIA (100)</option>
-<option value="375">BSE (375)</option>
-<option value="1000">BSOFT (1000)</option>
-<option value="125">CAMS (125)</option>
-<option value="6750">CANBK (6750)</option>
-<option value="350">CDSL (350)</option>
-<option value="2925">CESC (2925)</option>
-<option value="725">CGPOWER (725)</option>
-<option value="950">CHAMBLFERT (950)</option>
-<option value="625">CHOLAFIN (625)</option>
-<option value="325">CIPLA (325)</option>
-<option value="1050">COALINDIA (1050)</option>
-<option value="375">COFORGE (375)</option>
-<option value="175">COLPAL (175)</option>
-<option value="1000">CONCOR (1000)</option>
-<option value="1800">CROMPTON (1800)</option>
-<option value="150">CUMMINSIND (150)</option>
-<option value="300">CYIENT (300)</option>
-<option value="1250">DABUR (1250)</option>
-<option value="275">DALBHARAT (275)</option>
-<option value="1525">DELHIVERY (1525)</option>
-<option value="100">DIVISLAB (100)</option>
-<option value="50">DIXON (50)</option>
-<option value="825">DLF (825)</option>
-<option value="150">DMART (150)</option>
-<option value="625">DRREDDY (625)</option>
-<option value="175">EICHERMOT (175)</option>
-<option value="2000">ETERNAL (2000)</option>
-<option value="1800">EXIDEIND (1800)</option>
-<option value="5000">FEDERALBNK (5000)</option>
-<option value="775">FORTIS (775)</option>
-<option value="2350">GAIL (2350)</option>
-<option value="325">GLENMARK (325)</option>
-<option value="5625">GMRAIRPORT (5625)</option>
-<option value="500">GODREJCP (500)</option>
-<option value="225">GODREJPROP (225)</option>
-<option value="1000">GRANULES (1000)</option>
-<option value="250">GRASIM (250)</option>
-<option value="150">HAL (150)</option>
-<option value="500">HAVELLS (500)</option>
-<option value="350">HCLTECH (350)</option>
-<option value="150">HDFCAMC (150)</option>
-<option value="550">HDFCBANK (550)</option>
-<option value="1100">HDFCLIFE (1100)</option>
-<option value="150">HEROMOTOCO (150)</option>
-<option value="4150">HFCL (4150)</option>
-<option value="1400">HINDALCO (1400)</option>
-<option value="2650">HINDCOPPER (2650)</option>
-<option value="2025">HINDPETRO (2025)</option>
-<option value="300">HINDUNILVR (300)</option>
-<option value="1225">HINDZINC (1225)</option>
-<option value="2425">HUDCO (2425)</option>
-<option value="700">ICICIBANK (700)</option>
-<option value="250">ICICIGI (250)</option>
-<option value="750">ICICIPRULI (750)</option>
-<option value="40000">IDEA (40000)</option>
-<option value="7500">IDFCFIRSTB (7500)</option>
-<option value="3750">IEX (3750)</option>
-<option value="2750">IGL (2750)</option>
-<option value="1550">IIFL (1550)</option>
-<option value="1000">INDHOTEL (1000)</option>
-<option value="950">INDIANB (950)</option>
-<option value="150">INDIGO (150)</option>
-<option value="500">INDUSINDBK (500)</option>
-<option value="1700">INDUSTOWER (1700)</option>
-<option value="400">INFY (400)</option>
-<option value="3225">INOXWIND (3225)</option>
-<option value="4875">IOC (4875)</option>
-<option value="10250">IRB (10250)</option>
-<option value="875">IRCTC (875)</option>
-<option value="2900">IREDA (2900)</option>
-<option value="3525">IRFC (3525)</option>
-<option value="1600">ITC (1600)</option>
-<option value="625">JINDALSTEL (625)</option>
-<option value="1650">JIOFIN (1650)</option>
-<option value="775">JSL (775)</option>
-<option value="750">JSWENERGY (750)</option>
-<option value="675">JSWSTEEL (675)</option>
-<option value="1250">JUBLFOOD (1250)</option>
-<option value="775">KALYANKJIL (775)</option>
-<option value="100">KAYNES (100)</option>
-<option value="150">KEI (150)</option>
-<option value="400">KOTAKBANK (400)</option>
-<option value="400">KPITTECH (400)</option>
-<option value="1700">LAURUSLABS (1700)</option>
-<option value="1000">LICHSGFIN (1000)</option>
-<option value="575">LICI (575)</option>
-<option value="450">LODHA (450)</option>
-<option value="150">LT (150)</option>
-<option value="4462">LTF (4462)</option>
-<option value="150">LTIM (150)</option>
-<option value="425">LUPIN (425)</option>
-<option value="175">M&M (175)</option>
-<option value="2056">M&MFIN (2056)</option>
-<option value="3000">MANAPPURAM (3000)</option>
-<option value="225">MANKIND (225)</option>
-<option value="1200">MARICO (1200)</option>
-<option value="50">MARUTI (50)</option>
-<option value="525">MAXHEALTH (525)</option>
-<option value="175">MAZDOCK (175)</option>
-<option value="100">MCX (100)</option>
-<option value="800">MFSL (800)</option>
-<option value="400">MGL (400)</option>
-<option value="3550">MOTHERSON (3550)</option>
-<option value="275">MPHASIS (275)</option>
-<option value="275">MUTHOOTFIN (275)</option>
-<option value="3750">NATIONALUM (3750)</option>
-<option value="375">NAUKRI (375)</option>
-<option value="5800">NBCC (5800)</option>
-<option value="1775">NCC (1775)</option>
-<option value="200">NESTLEIND (200)</option>
-<option value="6400">NHPC (6400)</option>
-<option value="13500">NMDC (13500)</option>
-<option value="1500">NTPC (1500)</option>
-<option value="2950">NYKAA (2950)</option>
-<option value="350">OBEROIRLTY (350)</option>
-<option value="50">OFSS (50)</option>
-<option value="1075">OIL (1075)</option>
-<option value="1925">ONGC (1925)</option>
-<option value="15">PAGEIND (15)</option>
-<option value="300">PATANJALI (300)</option>
-<option value="650">PAYTM (650)</option>
-<option value="750">PEL (750)</option>
-<option value="100">PERSISTENT (100)</option>
-<option value="1500">PETRONET (1500)</option>
-<option value="1300">PFC (1300)</option>
-<option value="350">PHOENIXLTD (350)</option>
-<option value="250">PIDILITIND (250)</option>
-<option value="125">PIIND (125)</option>
-<option value="8000">PNB (8000)</option>
-<option value="650">PNBHOUSING (650)</option>
-<option value="325">POLICYBZR (325)</option>
-<option value="125">POLYCAB (125)</option>
-<option value="1450">POONAWALLA (1450)</option>
-<option value="1800">POWERGRID (1800)</option>
-<option value="2500">PPLPHARMA (2500)</option>
-<option value="325">PRESTIGE (325)</option>
-<option value="2500">RBLBANK (2500)</option>
-<option value="1000">RECLTD (1000)</option>
-<option value="500">RELIANCE (500)</option>
-<option value="1375">RVNL (1375)</option>
-<option value="4000">SAIL (4000)</option>
-<option value="800">SBICARD (800)</option>
-<option value="375">SBILIFE (375)</option>
-<option value="750">SBIN (750)</option>
-<option value="20">SENSEX (20)</option>
-<option value="25">SHREECEM (25)</option>
-<option value="750">SHRIRAMFIN (750)</option>
-<option value="75">SIEMENS (75)</option>
-<option value="4725">SJVN (4725)</option>
-<option value="75">SOLARINDS (75)</option>
-<option value="775">SONACOMS (775)</option>
-<option value="375">SRF (375)</option>
-<option value="350">SUNPHARMA (350)</option>
-<option value="125">SUPREMEIND (125)</option>
-<option value="1000">SYNGENE (1000)</option>
-<option value="550">TATACHEM (550)</option>
-<option value="250">TATACOMM (250)</option>
-<option value="456">TATACONSUM (456)</option>
-<option value="100">TATAELXSI (100)</option>
-<option value="550">TATAMOTORS (550)</option>
-<option value="1350">TATAPOWER (1350)</option>
-<option value="5500">TATASTEEL (5500)</option>
-<option value="700">TATATECH (700)</option>
-<option value="175">TCS (175)</option>
-<option value="600">TECHM (600)</option>
-<option value="150">TIINDIA (150)</option>
-<option value="625">TITAGARH (625)</option>
-<option value="175">TITAN (175)</option>
-<option value="250">TORNTPHARM (250)</option>
-<option value="375">TORNTPOWER (375)</option>
-<option value="100">TRENT (100)</option>
-<option value="350">TVSMOTOR (350)</option>
-<option value="50">ULTRACEMCO (50)</option>
-<option value="4425">UNIONBANK (4425)</option>
-<option value="350">UNITDSPR (350)</option>
-<option value="550">UNOMINDA (550)</option>
-<option value="1355">UPL (1355)</option>
-<option value="875">VBL (875)</option>
-<option value="1150">VEDL (1150)</option>
-<option value="300">VOLTAS (300)</option>
-<option value="3000">WIPRO (3000)</option>
-<option value="26000">YESBANK (26000)</option>
-<option value="900">ZYDUSLIFE (900)</option>
-    </select>
-
-    <button onclick="calculate()">Calculate</button>
-  </div>
-
-  <div class="footer">
-    <p>⚠️ Disclaimer: This app is for educational purposes only. Trading involves risk. Consult a financial advisor before making investment decisions.</p>
-    <div>
-      <a href="https://sites.google.com/view/ltpcalculatorsaboutus/home" target="_blank">About Us</a> |
-      <a href="https://sites.google.com/view/ltpcalculators/home" target="_blank">Privacy Policy</a> |
-      <a href="https://sites.google.com/view/ltpcalculatorstermcondition/home" target="_blank">Terms & Conditions</a>
+  <div class="container">
+    <h1>Nifty 50 Option Chain</h1>
+    <div class="table-wrapper" id="tableWrapper">
+      <div id="table-container">Loading data...</div>
     </div>
-    <button class="exit-btn" onclick="exitApp()">Exit App</button>
+  </div>
+  <div class="disclaimer">
+    Disclaimer: The data shown here is for informational purposes only. Please verify with official sources before making any financial decisions.
   </div>
 
   <script>
-    function autoATM() {
-      const cmp = parseFloat(document.getElementById("cmp").value);
-      if (!isNaN(cmp)) {
-        document.getElementById("atm").value = Math.round(cmp / 100) * 100;
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSxjT683l5F4vCLWGB7QwO29L4XgawsdEHFG_nGRMs7ZSGeIPM0uJKwVtupbLH7g15rDYVi3pGKxEIJ/pub?gid=1834850132&single=true&output=csv";
+
+    async function fetchData() {
+      try {
+        const res = await fetch(csvUrl);
+        if (!res.ok) throw new Error("Failed to fetch data");
+        const text = await res.text();
+        const rows = text.trim().split("\n").map(r => r.split(","));
+
+        const table = document.createElement("table");
+        const thead = document.createElement("thead");
+        const tbody = document.createElement("tbody");
+
+        // Row 1: Main header
+        const headerRow = document.createElement("tr");
+        headerRow.innerHTML = `
+          <th class="call-heading" colspan="6">CALL</th>
+          <th class="strike-heading"></th>
+          <th class="put-heading" colspan="6">PUT</th>`;
+        thead.appendChild(headerRow);
+
+        // Row 2: Subheader
+        const subHeaderRow = document.createElement("tr");
+        rows[1].forEach(text => {
+          const th = document.createElement("th");
+          th.textContent = text.trim();
+          subHeaderRow.appendChild(th);
+        });
+        thead.appendChild(subHeaderRow);
+
+        // Data rows
+        rows.slice(2).forEach((row, idx) => {
+          const tr = document.createElement("tr");
+          row.forEach((cell, colIndex) => {
+            const td = document.createElement("td");
+            td.textContent = cell.trim();
+
+            if (colIndex < 6) td.classList.add("call-cell");
+            else if (colIndex > 6) td.classList.add("put-cell");
+            if (colIndex === 6) td.classList.add("strike-cell");
+
+            if (cell.includes("-")) td.classList.add("negative");
+            else if (!isNaN(cell) && Number(cell) > 0) td.classList.add("positive");
+
+            tr.appendChild(td);
+          });
+
+          // Highlight Row 16 (ATM Row)
+          if (idx === 15) tr.classList.add("atm-row");
+          tbody.appendChild(tr);
+        });
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+
+        const container = document.getElementById("table-container");
+        container.innerHTML = "";
+        container.appendChild(table);
+
+        // Auto-center ATM row vertically & horizontally
+        setTimeout(() => {
+          const wrapper = document.getElementById("tableWrapper");
+          const atmRow = document.querySelector(".atm-row");
+          if (atmRow) {
+            const rowOffsetTop = atmRow.offsetTop;
+            const rowHeight = atmRow.offsetHeight;
+            const wrapperHeight = wrapper.clientHeight;
+
+            // Vertical scroll (ATM row centered)
+            wrapper.scrollTop = rowOffsetTop - (wrapperHeight / 2) + (rowHeight / 2);
+
+            // Horizontal scroll (Strike price centered)
+            const strikeCell = atmRow.querySelector(".strike-cell");
+            if (strikeCell) {
+              const cellLeft = strikeCell.offsetLeft;
+              const cellWidth = strikeCell.offsetWidth;
+              wrapper.scrollLeft = cellLeft - (wrapper.clientWidth / 2) + (cellWidth / 2);
+            }
+          }
+        }, 500); // Delay ensures rendering is complete
+      } catch (err) {
+        console.error(err);
+        document.getElementById("table-container").innerHTML = "<p style='color:red;'>Error loading data.</p>";
       }
     }
 
-    function calculate() {
-      const cmp = parseFloat(document.getElementById("cmp").value);
-      const atm = parseFloat(document.getElementById("atm").value);
-      const ltp = parseFloat(document.getElementById("ltp").value);
-      const target = parseFloat(document.getElementById("target").value);
-      const stop = parseFloat(document.getElementById("stop").value);
-      const lot = parseInt(document.getElementById("lot").value);
+    fetchData();
 
-      if ([cmp, atm, ltp, target, stop].some(isNaN)) {
-        alert("Please fill in all fields correctly.");
-        return;
+    // Re-center on resize
+    window.addEventListener("resize", () => {
+      const wrapper = document.getElementById("tableWrapper");
+      const atmRow = document.querySelector(".atm-row");
+      if (atmRow) {
+        const rowOffsetTop = atmRow.offsetTop;
+        const rowHeight = atmRow.offsetHeight;
+        wrapper.scrollTop = rowOffsetTop - (wrapper.clientHeight / 2) + (rowHeight / 2);
+
+        const strikeCell = atmRow.querySelector(".strike-cell");
+        if (strikeCell) {
+          const cellLeft = strikeCell.offsetLeft;
+          const cellWidth = strikeCell.offsetWidth;
+          wrapper.scrollLeft = cellLeft - (wrapper.clientWidth / 2) + (cellWidth / 2);
+        }
       }
-
-      const deltaFactor = 0.5;
-      const moveUp = target - cmp;
-      const moveDown = cmp - stop;
-
-      const targetPremium = ltp + (moveUp * deltaFactor);
-      const stopPremium = ltp - (moveDown * deltaFactor);
-
-      const investment = ltp * lot;
-      const profit = (targetPremium - ltp) * lot;
-      const loss = (ltp - stopPremium) * lot;
-
-      const resultHTML = `
-        <html>
-        <head>
-          <title>Calculation Results</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            html, body {
-              margin: 0;
-              padding: 1rem;
-              font-family: Arial, sans-serif;
-              max-width: 100%;
-              box-sizing: border-box;
-              word-wrap: break-word;
-            }
-            .highlight {
-              background-color: #c8e6c9;
-              padding: 1rem;
-              border-radius: 6px;
-              margin: 1rem 0;
-              font-weight: bold;
-              font-size: 1rem;
-            }
-            p, h2 {
-              font-size: 1rem;
-              line-height: 1.5;
-            }
-            button {
-              margin-top: 2rem;
-              padding: 0.75rem 1.5rem;
-              background-color: #d32f2f;
-              color: white;
-              border: none;
-              border-radius: 6px;
-              cursor: pointer;
-              font-size: 1rem;
-              display: block;
-              width: fit-content;
-            }
-            button:hover {
-              background-color: #b71c1c;
-            }
-          </style>
-        </head>
-        <body>
-          <h2>Calculation Results</h2>
-          <div class="highlight">Target Premium: ₹${targetPremium.toFixed(2)}</div>
-          <div class="highlight">Stoploss Premium: ₹${stopPremium.toFixed(2)}</div>
-          <p><strong>Target Return %:</strong> ${(100 * (targetPremium - ltp) / ltp).toFixed(2)}%</p>
-          <p><strong>Stoploss %:</strong> ${(100 * (ltp - stopPremium) / ltp).toFixed(2)}%</p>
-          <hr>
-          <p><strong>Total Investment (1 lot):</strong> ₹${investment.toFixed(2)}</p>
-          <p><strong>Expected Profit:</strong> ₹${profit.toFixed(2)}</p>
-          <p><strong>Expected Loss:</strong> ₹${loss.toFixed(2)}</p>
-          <button onclick="window.close()">Close</button>
-        </body>
-        </html>
-      `;
-
-      const resultWindow = window.open("", "Calculation Results", "width=100%,height=100%,left=0,top=0,resizable=yes,scrollbars=yes");
-      resultWindow.document.write(resultHTML);
-      resultWindow.document.close();
-    }
-
-    function exitApp() {
-      if (confirm("Are you sure you want to exit the app?")) {
-        window.open('', '_self');
-        window.close();
-      }
-    }
+    });
   </script>
 </body>
 </html>
