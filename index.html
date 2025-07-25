@@ -2,276 +2,259 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nifty 50 Option Chain</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Nifty 50 Option Chain</title>
   <style>
     :root {
-      --header-bg: #003366;
-      --subheader-bg: #0059b3;
-      --call-bg: #e8f4fd;
-      --put-bg: #fdecea;
-      --strike-bg: #fff3cd;
-      --atm-bg: #ffecb3; /* Soft golden background for ATM */
-      --atm-shadow: rgba(0, 0, 0, 0.25);
-      --positive: #006400;
-      --negative: #c62828;
+      --header-bg: #003366; --subheader-bg: #0059b3;
+      --call-bg: #e8f4fd;   --put-bg: #fdecea;
+      --strike-bg: #fff3cd; --atm-bg: #ffecb3;
+      --atm-shadow: rgba(0,0,0,0.25);
+      --negative: #c62828;  --positive: #006400;
     }
-
     body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f5f5;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1rem;
+      margin:0;padding:1rem;
+      font-family:"Segoe UI",sans-serif;
+      background:#f5f5f5;color:#333;
+      display:flex;flex-direction:column;align-items:center;
     }
-
     .container {
-      width: 100%;
-      max-width: 1600px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      overflow: hidden;
+      width:100%;max-width:1600px;
+      background:#fff;border-radius:8px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      overflow:hidden;
     }
-
     h1 {
-      margin: 0;
-      background: var(--header-bg);
-      color: #fff;
-      text-align: center;
-      padding: 15px;
-      font-size: 1.8rem;
+      margin:0;padding:15px;
+      background:var(--header-bg);color:#fff;
+      font-size:1.8rem;
+      display:flex;align-items:center;justify-content:center;gap:20px;
     }
-
+    .expiry-date {
+      background:#ffc107;padding:5px 10px;
+      border-radius:5px;color:#000;font-size:1rem;
+    }
     .table-wrapper {
-      overflow: auto;
-      max-height: 80vh;
-      scroll-behavior: smooth;
+      overflow:auto;max-height:80vh;scroll-behavior:smooth;
     }
-
     table {
-      border-collapse: collapse;
-      width: max-content;
-      margin: auto;
+      border-collapse:collapse;margin:auto;width:max-content;
     }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-      white-space: nowrap;
+    th,td {
+      border:1px solid #ddd;padding:8px 12px;
+      text-align:center;white-space:nowrap;
     }
-
     thead tr:first-child th {
-      background: var(--header-bg);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: bold;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      position:sticky;top:0;z-index:10;
+      background:var(--header-bg);color:#fff;
+      font-weight:bold;font-size:1rem;
     }
-
     thead tr:nth-child(2) th {
-      background: var(--subheader-bg);
-      color: #fff;
-      font-size: 0.85rem;
-      position: sticky;
-      top: 50px;
-      z-index: 9;
+      position:sticky;top:40px;z-index:9;
+      background:var(--subheader-bg);color:#fff;
+      font-size:0.85rem;
     }
-
-    .call-heading {
-      background: #2196f3;
-      color: #fff;
-    }
-
-    .put-heading {
-      background: #f44336;
-      color: #fff;
-    }
-
-    .strike-heading {
-      background: var(--strike-bg);
-      color: #000;
-      font-weight: bold;
-    }
-
+    .call-heading { background:#2196f3;color:#fff; }
+    .put-heading  { background:#f44336;color:#fff; }
+    .strike-heading { background:var(--strike-bg);color:#000;font-weight:bold; }
+    .call-cell  { background:var(--call-bg); }
+    .put-cell   { background:var(--put-bg); }
+    .strike-cell{ background:var(--strike-bg);font-weight:bold; }
     .atm-row {
-      background-color: var(--atm-bg) !important;
-      color: #000 !important;
-      font-weight: bold;
-      box-shadow: inset 0 0 10px var(--atm-shadow), 0 0 8px var(--atm-shadow);
-      border: 2px solid #ffc107;
-      transition: all 0.3s ease;
+      background:var(--atm-bg)!important;color:#000!important;
+      font-weight:bold;
+      box-shadow: inset 0 0 10px var(--atm-shadow),0 0 8px var(--atm-shadow);
+      border:2px solid #ffc107;
     }
-
-    .call-cell {
-      background-color: var(--call-bg);
-    }
-
-    .put-cell {
-      background-color: var(--put-bg);
-    }
-
-    .strike-cell {
-      background-color: var(--strike-bg);
-      font-weight: bold;
-    }
-
-    .negative {
-      color: var(--negative);
-      font-weight: bold;
-    }
-
-    .positive {
-      color: var(--positive);
-    }
-
-    .disclaimer {
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      color: #555;
-      text-align: center;
-      max-width: 900px;
-      background: #f9f9f9;
-      padding: 10px;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-
-    @media (max-width: 768px) {
-      th, td {
-        font-size: 0.8rem;
-        padding: 6px;
-      }
-
-      h1 {
-        font-size: 1.4rem;
-      }
-    }
+    .negative    { color:var(--negative)!important;font-weight:bold; }
+    .trigger-buy { color:var(--positive)!important;font-weight:bold; }
+    .trigger-sell{ color:var(--negative)!important;font-weight:bold; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Nifty 50 Option Chain</h1>
+    <h1>
+      Nifty 50 Option Chain
+      <span class="expiry-date">Expiry: 31.07.2025</span>
+    </h1>
     <div class="table-wrapper" id="tableWrapper">
-      <div id="table-container">Loading data...</div>
+      <table id="optionTable"><thead></thead><tbody></tbody></table>
     </div>
-  </div>
-  <div class="disclaimer">
-    Disclaimer: The data shown here is for informational purposes only. Please verify with official sources before making any financial decisions.
   </div>
 
   <script>
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSxjT683l5F4vCLWGB7QwO29L4XgawsdEHFG_nGRMs7ZSGeIPM0uJKwVtupbLH7g15rDYVi3pGKxEIJ/pub?gid=1834850132&single=true&output=csv";
+  const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSxjT683l5F4vCLWGB7QwO29L4XgawsdEHFG_nGRMs7ZSGeIPM0uJKwVtupbLH7g15rDYVi3pGKxEIJ/pub?gid=1834850132&single=true&output=csv";
 
-    async function fetchData() {
-      try {
-        const res = await fetch(csvUrl);
-        if (!res.ok) throw new Error("Failed to fetch data");
-        const text = await res.text();
-        const rows = text.trim().split("\n").map(r => r.split(","));
+  // Keys for localStorage
+  const baseKey = new Date().toISOString().slice(0,10);
+  const oiKey   = baseKey + "-morningOI";
+  const dateKey = "lastSnapshotDate";
 
-        const table = document.createElement("table");
-        const thead = document.createElement("thead");
-        const tbody = document.createElement("tbody");
+  let morningData = JSON.parse(localStorage.getItem(oiKey)) || null;
+  let firstLoad = true;
 
-        // Row 1: Main header
-        const headerRow = document.createElement("tr");
-        headerRow.innerHTML = `
-          <th class="call-heading" colspan="6">CALL</th>
-          <th class="strike-heading"></th>
-          <th class="put-heading" colspan="6">PUT</th>`;
-        thead.appendChild(headerRow);
+  function fmt2(n){ return n.toFixed(2); }
 
-        // Row 2: Subheader
-        const subHeaderRow = document.createElement("tr");
-        rows[1].forEach(text => {
-          const th = document.createElement("th");
-          th.textContent = text.trim();
-          subHeaderRow.appendChild(th);
-        });
-        thead.appendChild(subHeaderRow);
-
-        // Data rows
-        rows.slice(2).forEach((row, idx) => {
-          const tr = document.createElement("tr");
-          row.forEach((cell, colIndex) => {
-            const td = document.createElement("td");
-            td.textContent = cell.trim();
-
-            if (colIndex < 6) td.classList.add("call-cell");
-            else if (colIndex > 6) td.classList.add("put-cell");
-            if (colIndex === 6) td.classList.add("strike-cell");
-
-            if (cell.includes("-")) td.classList.add("negative");
-            else if (!isNaN(cell) && Number(cell) > 0) td.classList.add("positive");
-
-            tr.appendChild(td);
-          });
-
-          // Highlight Row 16 (ATM Row)
-          if (idx === 15) tr.classList.add("atm-row");
-          tbody.appendChild(tr);
-        });
-
-        table.appendChild(thead);
-        table.appendChild(tbody);
-
-        const container = document.getElementById("table-container");
-        container.innerHTML = "";
-        container.appendChild(table);
-
-        // Auto-center ATM row vertically & horizontally
-        setTimeout(() => {
-          const wrapper = document.getElementById("tableWrapper");
-          const atmRow = document.querySelector(".atm-row");
-          if (atmRow) {
-            const rowOffsetTop = atmRow.offsetTop;
-            const rowHeight = atmRow.offsetHeight;
-            const wrapperHeight = wrapper.clientHeight;
-
-            // Vertical scroll (ATM row centered)
-            wrapper.scrollTop = rowOffsetTop - (wrapperHeight / 2) + (rowHeight / 2);
-
-            // Horizontal scroll (Strike price centered)
-            const strikeCell = atmRow.querySelector(".strike-cell");
-            if (strikeCell) {
-              const cellLeft = strikeCell.offsetLeft;
-              const cellWidth = strikeCell.offsetWidth;
-              wrapper.scrollLeft = cellLeft - (wrapper.clientWidth / 2) + (cellWidth / 2);
-            }
-          }
-        }, 500); // Delay ensures rendering is complete
-      } catch (err) {
-        console.error(err);
-        document.getElementById("table-container").innerHTML = "<p style='color:red;'>Error loading data.</p>";
+  async function fetchData(){
+    try {
+      // If date changed since last snapshot, clear
+      const lastDate = localStorage.getItem(dateKey);
+      if(lastDate !== baseKey){
+        localStorage.removeItem(oiKey);
+        morningData = null;
       }
+
+      const res = await fetch(csvUrl);
+      const text = await res.text();
+      const rows = text.trim().split("\n").map(r => r.split(","));
+
+      // If no snapshot yet, take it now (first fetch of the day)
+      if(!morningData){
+        morningData = rows.slice(2).map(r=>({
+          strike: r[6],
+          call:  (parseFloat(r[1])||0) + (parseFloat(r[2])||0),
+          put:   (parseFloat(r[11])||0)+ (parseFloat(r[10])||0)
+        }));
+        localStorage.setItem(oiKey, JSON.stringify(morningData));
+        localStorage.setItem(dateKey, baseKey);
+      }
+
+      buildTable(rows);
+      if(firstLoad){ centerATM(); firstLoad=false; }
+    } catch(err){
+      console.error(err);
     }
+  }
 
-    fetchData();
+  function buildTable(rows){
+    const thead = document.querySelector("#optionTable thead");
+    const tbody = document.querySelector("#optionTable tbody");
+    thead.innerHTML=""; tbody.innerHTML="";
 
-    // Re-center on resize
-    window.addEventListener("resize", () => {
-      const wrapper = document.getElementById("tableWrapper");
-      const atmRow = document.querySelector(".atm-row");
-      if (atmRow) {
-        const rowOffsetTop = atmRow.offsetTop;
-        const rowHeight = atmRow.offsetHeight;
-        wrapper.scrollTop = rowOffsetTop - (wrapper.clientHeight / 2) + (rowHeight / 2);
+    // Header 1
+    let h1 = document.createElement("tr");
+    h1.innerHTML = `
+      <th class="call-heading" colspan="7">CALL</th>
+      <th class="strike-heading"></th>
+      <th class="put-heading" colspan="7">PUT</th>`;
+    thead.appendChild(h1);
 
-        const strikeCell = atmRow.querySelector(".strike-cell");
-        if (strikeCell) {
-          const cellLeft = strikeCell.offsetLeft;
-          const cellWidth = strikeCell.offsetWidth;
-          wrapper.scrollLeft = cellLeft - (wrapper.clientWidth / 2) + (cellWidth / 2);
-        }
-      }
+    // Header 2
+    let h2 = document.createElement("tr");
+    [
+      "BUILT UP CE","OPEN INTEREST CE","CHANGE IN OI CE","VOLUME CE",
+      "TOTAL OI","LTP CE","CHANGE IN LTP CE",
+      "STRIKE PRICE",
+      "CHANGE IN LTP PE","LTP PE","TOTAL OI",
+      "VOLUME PE","CHANGE IN OI PE","OPEN INTEREST PE","BUILT UP PE"
+    ].forEach(txt=>{
+      let th=document.createElement("th");
+      th.textContent=txt; h2.appendChild(th);
     });
+    thead.appendChild(h2);
+
+    rows.slice(2).forEach((r,i)=>{
+      const tr=document.createElement("tr");
+
+      // CE values
+      const oiCE  = parseFloat(r[1])||0,
+            dOiCE = parseFloat(r[2])||0,
+            totCE = oiCE + dOiCE,
+            mCE   = (morningData.find(x=>x.strike===r[6])||{}).call||totCE,
+            pCE   = ((totCE-mCE)/mCE)*100;
+
+      // PE values
+      const oiPE  = parseFloat(r[11])||0,
+            dOiPE = parseFloat(r[10])||0,
+            totPE = oiPE + dOiPE,
+            mPE   = (morningData.find(x=>x.strike===r[6])||{}).put||totPE,
+            pPE   = ((totPE-mPE)/mPE)*100;
+
+      // 1 BUILT UP CE
+      let td=document.createElement("td");
+      td.textContent=r[0]; td.classList.add("call-cell");
+      if(r[0].toLowerCase().includes("buy")) td.classList.add("trigger-buy");
+      if(r[0].toLowerCase().includes("sell"))td.classList.add("trigger-sell");
+      tr.appendChild(td);
+
+      // 2‑4: OI CE, CHANGE OI CE, VOLUME CE
+      [1,2,3].forEach(j=>{
+        td=document.createElement("td");
+        td.textContent=Number(r[j]||0).toLocaleString();
+        td.classList.add("call-cell");
+        if(parseFloat(r[j])<0) td.classList.add("negative");
+        tr.appendChild(td);
+      });
+
+      // 5 TOTAL OI CE
+      td=document.createElement("td");
+      td.textContent=`${totCE.toLocaleString()} (${fmt2(pCE)}%)`;
+      td.classList.add("call-cell");
+      if(totCE-mCE<0) td.classList.add("negative");
+      tr.appendChild(td);
+
+      // 6‑7: LTP CE, CHANGE IN LTP CE
+      [4,5].forEach(j=>{
+        td=document.createElement("td");
+        td.textContent=fmt2(parseFloat(r[j])||0);
+        td.classList.add("call-cell");
+        if(parseFloat(r[j])<0) td.classList.add("negative");
+        tr.appendChild(td);
+      });
+
+      // 8 Strike
+      td=document.createElement("td");
+      td.textContent=r[6]; td.classList.add("strike-cell");
+      tr.appendChild(td);
+
+      // 9‑10: CHANGE IN LTP PE, LTP PE
+      [7,8].forEach(j=>{
+        td=document.createElement("td");
+        td.textContent=fmt2(parseFloat(r[j])||0);
+        td.classList.add("put-cell");
+        if(parseFloat(r[j])<0) td.classList.add("negative");
+        tr.appendChild(td);
+      });
+
+      // 11 TOTAL OI PE
+      td=document.createElement("td");
+      td.textContent=`${totPE.toLocaleString()} (${fmt2(pPE)}%)`;
+      td.classList.add("put-cell");
+      if(totPE-mPE<0) td.classList.add("negative");
+      tr.appendChild(td);
+
+      // 12‑14: VOLUME PE, CHANGE IN OI PE, OPEN INTEREST PE
+      [9,10,11].forEach(j=>{
+        td=document.createElement("td");
+        td.textContent=Number(r[j]||0).toLocaleString();
+        td.classList.add("put-cell");
+        if(parseFloat(r[j])<0) td.classList.add("negative");
+        tr.appendChild(td);
+      });
+
+      // 15 BUILT UP PE
+      td=document.createElement("td");
+      td.textContent=r[12]; td.classList.add("put-cell");
+      if(r[12].toLowerCase().includes("buy")) td.classList.add("trigger-buy");
+      if(r[12].toLowerCase().includes("sell"))td.classList.add("trigger-sell");
+      tr.appendChild(td);
+
+      if(i===15) tr.classList.add("atm-row");
+      document.querySelector("#optionTable tbody").appendChild(tr);
+    });
+  }
+
+  function centerATM(){
+    const w=document.getElementById("tableWrapper"),
+          r=document.querySelector(".atm-row");
+    if(!r) return;
+    w.scrollTop  = r.offsetTop - w.clientHeight/2 + r.offsetHeight/2;
+    const c=r.querySelector(".strike-cell");
+    w.scrollLeft = c.offsetLeft - w.clientWidth/2 + c.offsetWidth/2;
+  }
+
+  fetchData();
+  setInterval(fetchData,6000);
   </script>
 </body>
 </html>
