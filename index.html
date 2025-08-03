@@ -1,260 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Nifty 50 Option Chain</title>
-  <style>
-    :root {
-      --header-bg: #003366; --subheader-bg: #0059b3;
-      --call-bg: #e8f4fd;   --put-bg: #fdecea;
-      --strike-bg: #fff3cd; --atm-bg: #ffecb3;
-      --atm-shadow: rgba(0,0,0,0.25);
-      --negative: #c62828;  --positive: #006400;
-    }
-    body {
-      margin:0;padding:1rem;
-      font-family:"Segoe UI",sans-serif;
-      background:#f5f5f5;color:#333;
-      display:flex;flex-direction:column;align-items:center;
-    }
-    .container {
-      width:100%;max-width:1600px;
-      background:#fff;border-radius:8px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.1);
-      overflow:hidden;
-    }
-    h1 {
-      margin:0;padding:15px;
-      background:var(--header-bg);color:#fff;
-      font-size:1.8rem;
-      display:flex;align-items:center;justify-content:center;gap:20px;
-    }
-    .expiry-date {
-      background:#ffc107;padding:5px 10px;
-      border-radius:5px;color:#000;font-size:1rem;
-    }
-    .table-wrapper {
-      overflow:auto;max-height:80vh;scroll-behavior:smooth;
-    }
-    table {
-      border-collapse:collapse;margin:auto;width:max-content;
-    }
-    th,td {
-      border:1px solid #ddd;padding:8px 12px;
-      text-align:center;white-space:nowrap;
-    }
-    thead tr:first-child th {
-      position:sticky;top:0;z-index:10;
-      background:var(--header-bg);color:#fff;
-      font-weight:bold;font-size:1rem;
-    }
-    thead tr:nth-child(2) th {
-      position:sticky;top:40px;z-index:9;
-      background:var(--subheader-bg);color:#fff;
-      font-size:0.85rem;
-    }
-    .call-heading { background:#2196f3;color:#fff; }
-    .put-heading  { background:#f44336;color:#fff; }
-    .strike-heading { background:var(--strike-bg);color:#000;font-weight:bold; }
-    .call-cell  { background:var(--call-bg); }
-    .put-cell   { background:var(--put-bg); }
-    .strike-cell{ background:var(--strike-bg);font-weight:bold; }
-    .atm-row {
-      background:var(--atm-bg)!important;color:#000!important;
-      font-weight:bold;
-      box-shadow: inset 0 0 10px var(--atm-shadow),0 0 8px var(--atm-shadow);
-      border:2px solid #ffc107;
-    }
-    .negative    { color:var(--negative)!important;font-weight:bold; }
-    .trigger-buy { color:var(--positive)!important;font-weight:bold; }
-    .trigger-sell{ color:var(--negative)!important;font-weight:bold; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Nifty Option Chain - Paper Trading</title>
+<style>
+:root {
+  --primary: #1976d2;
+  --secondary: #fbc02d;
+  --positive: #2e7d32;
+  --negative: #c62828;
+  --light: #f4f7fa;
+  --shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+body {
+  margin:0; font-family:'Segoe UI',sans-serif; background:var(--light); color:#333;
+}
+/* Top bar */
+#topBar {
+  position:fixed; top:0; left:0; right:0; background:var(--primary); color:#fff;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 15px; z-index:999;
+  box-shadow:var(--shadow);
+}
+#topBar span { font-size:14px; }
+#overallPL.positive{color:#a5d6a7;}
+#overallPL.negative{color:#ef9a9a;}
+.container {
+  margin-top:60px; width:100%; max-width:1800px; margin-left:auto; margin-right:auto;
+  background:#fff; border-radius:8px; box-shadow:var(--shadow);
+  overflow:hidden;
+}
+h1 {margin:0; padding:15px; background:var(--primary); color:#fff; font-size:1.5rem; text-align:center;}
+.expiry-date{background:var(--secondary); padding:3px 8px; border-radius:5px; color:#000;}
+.table-wrapper { overflow:auto; max-height:75vh; scroll-behavior:smooth;}
+table { border-collapse:collapse; width:max-content; min-width:100%; }
+th,td { border:1px solid #ddd; padding:8px 10px; text-align:center; white-space:nowrap; font-size:14px;}
+thead tr:first-child th{position:sticky;top:0;z-index:10;background:var(--primary);color:#fff;font-weight:bold;}
+thead tr:nth-child(2) th{position:sticky;top:40px;z-index:9;background:#1565c0;color:#fff;font-size:0.85rem;}
+.call-cell { background:#e3f2fd; }
+.put-cell  { background:#ffebee; }
+.strike-cell{ background:#fff8e1; font-weight:bold; }
+.atm-row {
+  background:linear-gradient(145deg,#ffe082,#ffecb3);
+  box-shadow:inset 0 0 15px rgba(0,0,0,0.25), 0 0 12px rgba(0,0,0,0.4);
+  transform:scale(1.01);
+}
+button.trade-btn{padding:5px 10px;font-size:12px;border:none;cursor:pointer;border-radius:4px;margin:2px;transition:all 0.2s;}
+button.buy-btn{background:#4CAF50;color:#fff;}
+button.sell-btn{background:#f44336;color:#fff;}
+button.buy-btn:hover{opacity:0.9;} button.sell-btn:hover{opacity:0.9;}
+/* Orders Popup */
+#ordersPopup{
+  display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:95%;max-width:650px;background:#fff;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.3);
+  z-index:1000;
+}
+#ordersHeader{background:var(--primary);color:#fff;padding:10px;display:flex;justify-content:space-between;align-items:center;border-radius:8px 8px 0 0;}
+#ordersTabs{display:flex;}
+#ordersTabs button{flex:1;padding:10px;background:#f0f0f0;border:none;cursor:pointer;}
+#ordersTabs button.active{background:var(--primary);color:#fff;}
+.ordersContent{display:none;padding:10px;max-height:400px;overflow:auto;}
+.ordersContent.active{display:block;}
+.pt-table{width:100%;border-collapse:collapse;}
+.pt-table th,.pt-table td{border:1px solid #ccc;padding:6px;font-size:13px;text-align:center;}
+.pt-table th{background:#f0f0f0;}
+/* Help Modal */
+#helpModal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:#fff;padding:20px;z-index:1000;width:90%;max-width:400px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+#helpModal h3{margin-top:0;}
+/* Floating Help */
+#helpBtn{
+  position:fixed;bottom:15px;right:15px;z-index:999;background:var(--primary);color:#fff;
+  padding:10px 15px;border:none;border-radius:50%;box-shadow:var(--shadow);cursor:pointer;
+  font-size:20px;transition:0.3s;
+}
+#helpBtn:hover{transform:scale(1.1);}
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  table {font-size:12px;}
+  /* Important columns first for mobile quick view */
+  .mobile-priority {order: -1;}
+}
+footer{background:#f0f0f0;font-size:12px;color:#555;line-height:1.4;padding:10px;text-align:center;}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>
-      Nifty 50 Option Chain
-      <span class="expiry-date">Expiry: 2025-08-07</span>
-    </h1>
-    <div class="table-wrapper" id="tableWrapper">
-      <table id="optionTable"><thead></thead><tbody></tbody></table>
-    </div>
+
+<div id="topBar">
+  <span>Wallet ₹<span id="walletBalance">500000</span></span>
+  <span>P&L ₹<span id="overallPL">0.00</span></span>
+  <button id="ordersBtn" onclick="openOrders()">Orders</button>
+</div>
+
+<div class="container">
+  <h1>Nifty 50 Option Chain <span class="expiry-date">Expiry: 2025-08-07</span></h1>
+  <div class="table-wrapper" id="tableWrapper">
+    <table id="optionTable"><thead></thead><tbody></tbody></table>
   </div>
+</div>
 
-  <script>
-  const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSxjT683l5F4vCLWGB7QwO29L4XgawsdEHFG_nGRMs7ZSGeIPM0uJKwVtupbLH7g15rDYVi3pGKxEIJ/pub?gid=1834850132&single=true&output=csv";
+<!-- Orders Popup -->
+<div id="ordersPopup">
+  <div id="ordersHeader">
+    <h3>Paper Trading</h3>
+    <button onclick="closeOrders()">×</button>
+  </div>
+  <div id="ordersTabs">
+    <button class="active" onclick="switchOrdersTab('positions',this)">Positions</button>
+    <button onclick="switchOrdersTab('history',this)">History</button>
+  </div>
+  <div id="positions" class="ordersContent active">
+    <table class="pt-table" id="posTable">
+      <thead><tr><th>Type</th><th>Strike</th><th>Side</th><th>Lots</th><th>Avg Price</th><th>P/L</th><th>Close</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div id="history" class="ordersContent">
+    <table class="pt-table" id="historyTable">
+      <thead><tr><th>Time</th><th>Action</th><th>Type</th><th>Strike</th><th>Lots</th><th>Price</th><th>P/L</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
 
-  // Keys for localStorage
-  const baseKey = new Date().toISOString().slice(0,10);
-  const oiKey   = baseKey + "-morningOI";
-  const dateKey = "lastSnapshotDate";
+<!-- Help Modal -->
+<div id="helpModal">
+  <h3>How to Trade (Paper Trading)</h3>
+  <p>• Use Buy/Sell buttons near each strike to place orders.<br>
+     • 1 Lot = 75 qty.<br>
+     • Wallet balance is virtual ₹5,00,000.<br>
+     • Positions update live as market prices change.<br>
+     • Close position button realizes P&L and moves it to history.</p>
+  <button onclick="closeHelp()">Close</button>
+</div>
+<button id="helpBtn" onclick="openHelp()">?</button>
 
-  let morningData = JSON.parse(localStorage.getItem(oiKey)) || null;
-  let firstLoad = true;
+<footer>
+  <strong>Disclaimer:</strong> This is a simulated paper trading platform for educational purposes only. 
+  It does not execute real trades and is not registered with SEBI.
+</footer>
 
-  function fmt2(n){ return n.toFixed(2); }
-
-  async function fetchData(){
-    try {
-      // If date changed since last snapshot, clear
-      const lastDate = localStorage.getItem(dateKey);
-      if(lastDate !== baseKey){
-        localStorage.removeItem(oiKey);
-        morningData = null;
-      }
-
-      const res = await fetch(csvUrl);
-      const text = await res.text();
-      const rows = text.trim().split("\n").map(r => r.split(","));
-
-      // If no snapshot yet, take it now (first fetch of the day)
-      if(!morningData){
-        morningData = rows.slice(2).map(r=>({
-          strike: r[6],
-          call:  (parseFloat(r[1])||0) + (parseFloat(r[2])||0),
-          put:   (parseFloat(r[11])||0)+ (parseFloat(r[10])||0)
-        }));
-        localStorage.setItem(oiKey, JSON.stringify(morningData));
-        localStorage.setItem(dateKey, baseKey);
-      }
-
-      buildTable(rows);
-      if(firstLoad){ centerATM(); firstLoad=false; }
-    } catch(err){
-      console.error(err);
+<script>
+const csvUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vSxjT683l5F4vCLWGB7QwO29L4XgawsdEHFG_nGRMs7ZSGeIPM0uJKwVtupbLH7g15rDYVi3pGKxEIJ/pub?gid=1834850132&single=true&output=csv";
+let positions=[],history=[],balance=500000; let firstLoad=true;
+function fmt2(n){return parseFloat(n).toFixed(2);}
+async function fetchData(){
+  const res=await fetch(csvUrl); const text=await res.text(); const rows=text.trim().split("\n").map(r=>r.split(","));
+  buildTable(rows); if(firstLoad){centerATM(); firstLoad=false;}
+}
+function buildTable(rows){
+  const thead=document.querySelector("#optionTable thead");
+  const tbody=document.querySelector("#optionTable tbody");
+  thead.innerHTML=""; tbody.innerHTML="";
+  let h1=document.createElement("tr");
+  h1.innerHTML=`<th>Trade CE</th><th colspan="7">CALL</th><th class="strike-heading">Strike</th><th colspan="7">PUT</th><th>Trade PE</th>`;
+  thead.appendChild(h1);
+  let h2=document.createElement("tr");
+  ["","Built CE","OI CE","Chg OI CE","Vol CE","Tot OI","LTP CE","Chg LTP CE","Strike","Chg LTP PE","LTP PE","Tot OI","Vol PE","Chg OI PE","OI PE","Built PE",""].forEach(txt=>{
+    let th=document.createElement("th"); th.textContent=txt; h2.appendChild(th);
+  });
+  thead.appendChild(h2);
+  rows.slice(2).forEach((r,i)=>{
+    const strike=parseFloat(r[6]); const ltpCE=parseFloat(r[4])||0; const ltpPE=parseFloat(r[8])||0;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td class="mobile-priority"><button class="trade-btn buy-btn" onclick="placeOrder('CALL','BUY',${strike},${ltpCE})">Buy</button>
+          <button class="trade-btn sell-btn" onclick="placeOrder('CALL','SELL',${strike},${ltpCE})">Sell</button></td>
+      <td class="call-cell">${r[0]}</td>
+      <td class="call-cell">${Number(r[1]||0).toLocaleString()}</td>
+      <td class="call-cell">${Number(r[2]||0).toLocaleString()}</td>
+      <td class="call-cell">${Number(r[3]||0).toLocaleString()}</td>
+      <td class="call-cell">${(parseFloat(r[1])+parseFloat(r[2])||0).toLocaleString()}</td>
+      <td class="call-cell mobile-priority">${fmt2(ltpCE)}</td>
+      <td class="call-cell">${fmt2(parseFloat(r[5])||0)}</td>
+      <td class="strike-cell mobile-priority">${strike}</td>
+      <td class="put-cell">${fmt2(parseFloat(r[7])||0)}</td>
+      <td class="put-cell mobile-priority">${fmt2(ltpPE)}</td>
+      <td class="put-cell">${(parseFloat(r[11])+parseFloat(r[10])||0).toLocaleString()}</td>
+      <td class="put-cell">${Number(r[9]||0).toLocaleString()}</td>
+      <td class="put-cell">${Number(r[10]||0).toLocaleString()}</td>
+      <td class="put-cell">${Number(r[11]||0).toLocaleString()}</td>
+      <td class="put-cell">${r[12]}</td>
+      <td class="mobile-priority"><button class="trade-btn buy-btn" onclick="placeOrder('PUT','BUY',${strike},${ltpPE})">Buy</button>
+          <button class="trade-btn sell-btn" onclick="placeOrder('PUT','SELL',${strike},${ltpPE})">Sell</button></td>`;
+    if(i===15) tr.classList.add("atm-row");
+    tbody.appendChild(tr);
+  });
+}
+function centerATM(){
+  const w=document.getElementById("tableWrapper"), r=document.querySelector(".atm-row");
+  if(!r) return; w.scrollTop=r.offsetTop-w.clientHeight/2+r.offsetHeight/2;
+}
+function placeOrder(type,side,strike,price){
+  const qty=1; const cost=price*75*qty*(side==='SELL'?1.5:1);
+  if(cost>balance){alert("Insufficient Wallet Balance");return;}
+  balance-=cost;
+  positions.push({type,side,strike,qty,avgPrice:price});
+  history.push({time:new Date().toLocaleTimeString(),action:side,type,strike,lots:qty,price,pl:0});
+  updateWallet(); renderPositions(); renderHistory();
+}
+function updateWallet(){document.getElementById('walletBalance').textContent=balance.toFixed(2);}
+function renderPositions(){
+  const tbody=document.querySelector('#posTable tbody'); tbody.innerHTML=""; let totalPL=0;
+  positions.forEach((pos,i)=>{
+    const ltp=getLTP(pos.type,pos.strike)||pos.avgPrice;
+    const pl=(pos.side==='BUY')?(ltp-pos.avgPrice)*pos.qty*75:(pos.avgPrice-ltp)*pos.qty*75;
+    totalPL+=pl;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${pos.type}</td><td>${pos.strike}</td><td>${pos.side}</td><td>${pos.qty}</td><td>${pos.avgPrice.toFixed(2)}</td><td>${pl.toFixed(2)}</td><td><button onclick="closePos(${i},${ltp})">Close</button></td>`;
+    tbody.appendChild(tr);
+  });
+  const plEl=document.getElementById('overallPL'); plEl.textContent=totalPL.toFixed(2); plEl.className=totalPL>=0?'positive':'negative';
+}
+function renderHistory(){
+  const tbody=document.querySelector('#historyTable tbody'); tbody.innerHTML="";
+  history.slice().reverse().forEach(h=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${h.time}</td><td>${h.action}</td><td>${h.type}</td><td>${h.strike}</td><td>${h.lots}</td><td>${h.price}</td><td>${h.pl||0}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function closePos(i,ltp){
+  const pos=positions[i];
+  const pl=(pos.side==='BUY')?(ltp-pos.avgPrice)*pos.qty*75:(pos.avgPrice-ltp)*pos.qty*75;
+  balance+=ltp*pos.qty*75+pl;
+  history.push({time:new Date().toLocaleTimeString(),action:"Close",type:pos.type,strike:pos.strike,lots:pos.qty,price:ltp,pl});
+  positions.splice(i,1);
+  updateWallet(); renderPositions(); renderHistory();
+}
+function getLTP(type,strike){
+  const rows=document.querySelectorAll('#optionTable tbody tr');
+  for(let r of rows){
+    const s=parseFloat(r.querySelector('.strike-cell').innerText);
+    if(s===parseFloat(strike)){
+      return type==='CALL'?parseFloat(r.querySelectorAll('td')[7].innerText):parseFloat(r.querySelectorAll('td')[10].innerText);
     }
-  }
-
-  function buildTable(rows){
-    const thead = document.querySelector("#optionTable thead");
-    const tbody = document.querySelector("#optionTable tbody");
-    thead.innerHTML=""; tbody.innerHTML="";
-
-    // Header 1
-    let h1 = document.createElement("tr");
-    h1.innerHTML = `
-      <th class="call-heading" colspan="7">CALL</th>
-      <th class="strike-heading"></th>
-      <th class="put-heading" colspan="7">PUT</th>`;
-    thead.appendChild(h1);
-
-    // Header 2
-    let h2 = document.createElement("tr");
-    [
-      "BUILT UP CE","OPEN INTEREST CE","CHANGE IN OI CE","VOLUME CE",
-      "TOTAL OI","LTP CE","CHANGE IN LTP CE",
-      "STRIKE PRICE",
-      "CHANGE IN LTP PE","LTP PE","TOTAL OI",
-      "VOLUME PE","CHANGE IN OI PE","OPEN INTEREST PE","BUILT UP PE"
-    ].forEach(txt=>{
-      let th=document.createElement("th");
-      th.textContent=txt; h2.appendChild(th);
-    });
-    thead.appendChild(h2);
-
-    rows.slice(2).forEach((r,i)=>{
-      const tr=document.createElement("tr");
-
-      // CE values
-      const oiCE  = parseFloat(r[1])||0,
-            dOiCE = parseFloat(r[2])||0,
-            totCE = oiCE + dOiCE,
-            mCE   = (morningData.find(x=>x.strike===r[6])||{}).call||totCE,
-            pCE   = ((totCE-mCE)/mCE)*100;
-
-      // PE values
-      const oiPE  = parseFloat(r[11])||0,
-            dOiPE = parseFloat(r[10])||0,
-            totPE = oiPE + dOiPE,
-            mPE   = (morningData.find(x=>x.strike===r[6])||{}).put||totPE,
-            pPE   = ((totPE-mPE)/mPE)*100;
-
-      // 1 BUILT UP CE
-      let td=document.createElement("td");
-      td.textContent=r[0]; td.classList.add("call-cell");
-      if(r[0].toLowerCase().includes("buy")) td.classList.add("trigger-buy");
-      if(r[0].toLowerCase().includes("sell"))td.classList.add("trigger-sell");
-      tr.appendChild(td);
-
-      // 2‑4: OI CE, CHANGE OI CE, VOLUME CE
-      [1,2,3].forEach(j=>{
-        td=document.createElement("td");
-        td.textContent=Number(r[j]||0).toLocaleString();
-        td.classList.add("call-cell");
-        if(parseFloat(r[j])<0) td.classList.add("negative");
-        tr.appendChild(td);
-      });
-
-      // 5 TOTAL OI CE
-      td=document.createElement("td");
-      td.textContent=`${totCE.toLocaleString()} (${fmt2(pCE)}%)`;
-      td.classList.add("call-cell");
-      if(totCE-mCE<0) td.classList.add("negative");
-      tr.appendChild(td);
-
-      // 6‑7: LTP CE, CHANGE IN LTP CE
-      [4,5].forEach(j=>{
-        td=document.createElement("td");
-        td.textContent=fmt2(parseFloat(r[j])||0);
-        td.classList.add("call-cell");
-        if(parseFloat(r[j])<0) td.classList.add("negative");
-        tr.appendChild(td);
-      });
-
-      // 8 Strike
-      td=document.createElement("td");
-      td.textContent=r[6]; td.classList.add("strike-cell");
-      tr.appendChild(td);
-
-      // 9‑10: CHANGE IN LTP PE, LTP PE
-      [7,8].forEach(j=>{
-        td=document.createElement("td");
-        td.textContent=fmt2(parseFloat(r[j])||0);
-        td.classList.add("put-cell");
-        if(parseFloat(r[j])<0) td.classList.add("negative");
-        tr.appendChild(td);
-      });
-
-      // 11 TOTAL OI PE
-      td=document.createElement("td");
-      td.textContent=`${totPE.toLocaleString()} (${fmt2(pPE)}%)`;
-      td.classList.add("put-cell");
-      if(totPE-mPE<0) td.classList.add("negative");
-      tr.appendChild(td);
-
-      // 12‑14: VOLUME PE, CHANGE IN OI PE, OPEN INTEREST PE
-      [9,10,11].forEach(j=>{
-        td=document.createElement("td");
-        td.textContent=Number(r[j]||0).toLocaleString();
-        td.classList.add("put-cell");
-        if(parseFloat(r[j])<0) td.classList.add("negative");
-        tr.appendChild(td);
-      });
-
-      // 15 BUILT UP PE
-      td=document.createElement("td");
-      td.textContent=r[12]; td.classList.add("put-cell");
-      if(r[12].toLowerCase().includes("buy")) td.classList.add("trigger-buy");
-      if(r[12].toLowerCase().includes("sell"))td.classList.add("trigger-sell");
-      tr.appendChild(td);
-
-      if(i===15) tr.classList.add("atm-row");
-      document.querySelector("#optionTable tbody").appendChild(tr);
-    });
-  }
-
-  function centerATM(){
-    const w=document.getElementById("tableWrapper"),
-          r=document.querySelector(".atm-row");
-    if(!r) return;
-    w.scrollTop  = r.offsetTop - w.clientHeight/2 + r.offsetHeight/2;
-    const c=r.querySelector(".strike-cell");
-    w.scrollLeft = c.offsetLeft - w.clientWidth/2 + c.offsetWidth/2;
-  }
-
-  fetchData();
-  setInterval(fetchData,6000);
-  </script>
+  } return null;
+}
+setInterval(()=>{renderPositions();},1000);
+function openOrders(){document.getElementById('ordersPopup').style.display='block';}
+function closeOrders(){document.getElementById('ordersPopup').style.display='none';}
+function switchOrdersTab(tab,btn){
+  document.querySelectorAll('.ordersContent').forEach(el=>el.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  document.querySelectorAll('#ordersTabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function openHelp(){document.getElementById('helpModal').style.display='block';}
+function closeHelp(){document.getElementById('helpModal').style.display='none';}
+fetchData(); setInterval(fetchData,6000);
+</script>
 </body>
 </html>
