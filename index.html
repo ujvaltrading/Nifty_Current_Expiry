@@ -53,8 +53,11 @@ button.buy-btn:hover,button.sell-btn:hover{opacity:0.9;}
 #depositModal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:20px;z-index:1000;width:90%;max-width:350px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
 #depositModal input{width:100%;padding:8px;margin-top:10px;margin-bottom:15px;font-size:14px;}
 #depositModal button{padding:8px 12px;margin-right:5px;}
-/* Lot Modal */
-#lotModal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:20px;z-index:1000;width:90%;max-width:350px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);text-align:center;position:relative;}
+/* Lot Modal FIXED */
+#lotModal{
+  display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:#fff;padding:20px;z-index:2000;width:90%;max-width:350px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);
+}
 #lotModal h3{margin-top:0;margin-bottom:10px;color:var(--primary);}
 #lotQty{font-size:20px;margin:0 10px;}
 .lot-btn{background:var(--primary);color:#fff;border:none;padding:5px 12px;font-size:16px;border-radius:4px;cursor:pointer;}
@@ -125,7 +128,7 @@ footer{background:#f0f0f0;font-size:12px;color:#555;line-height:1.4;padding:10px
   </div>
 </div>
 
-<!-- Lot Selection Modal -->
+<!-- Lot Selection Modal (Fixed Centered) -->
 <div id="lotModal">
   <button id="lotCloseBtn" onclick="closeLotModal()">×</button>
   <h3 id="tradeTitle"></h3>
@@ -158,8 +161,6 @@ footer{background:#f0f0f0;font-size:12px;color:#555;line-height:1.4;padding:10px
 <script>
 const csvUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vSxjT683l5F4vCLWGB7QwO29L4XgawsdEHFG_nGRMs7ZSGeIPM0uJKwVtupbLH7g15rDYVi3pGKxEIJ/pub?gid=1834850132&single=true&output=csv";
 let positions=[],history=[],balance=500000; let firstLoad=true;
-
-// Lot modal variables
 let tradeType="", tradeSide="", tradeStrike=0, tradePrice=0, lotCount=1;
 
 function fmt2(n){return parseFloat(n).toFixed(2);}
@@ -254,7 +255,9 @@ function renderPositions(){
     const pl=(pos.side==='BUY')?(ltp-pos.avgPrice)*pos.qty*75:(pos.avgPrice-ltp)*pos.qty*75;
     totalPL+=pl;
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${pos.type}</td><td>${pos.strike}</td><td>${pos.side}</td><td>${pos.qty}</td><td>${pos.avgPrice.toFixed(2)}</td><td style="color:${pl>=0?'green':'red'}">${pl.toFixed(2)}</td><td><button onclick="closePosition(${i})">Close</button></td>`;
+    tr.innerHTML=`<td>${pos.type}</td><td>${pos.strike}</td><td>${pos.side}</td><td>${pos.qty}</td>
+                  <td>${pos.avgPrice.toFixed(2)}</td><td style="color:${pl>=0?'green':'red'}">${pl.toFixed(2)}</td>
+                  <td><button onclick="closePosition(${i})">Close</button></td>`;
     tbody.appendChild(tr);
   });
   const overallPL=document.getElementById('overallPL');
@@ -263,7 +266,8 @@ function renderPositions(){
 }
 function getLTP(type,strike){
   const rows=document.querySelectorAll("#optionTable tbody tr");
-  for(let r of rows){ const s=parseFloat(r.querySelector('.strike-cell').textContent); if(s===strike){return parseFloat(type==='CALL'?r.cells[6].textContent:r.cells[10].textContent);} }
+  for(let r of rows){ const s=parseFloat(r.querySelector('.strike-cell').textContent);
+    if(s===strike){ return parseFloat(type==='CALL'?r.cells[6].textContent:r.cells[10].textContent); } }
   return null;
 }
 function closePosition(i){
@@ -277,20 +281,24 @@ function renderHistory(){
   const tbody=document.querySelector('#historyTable tbody'); tbody.innerHTML="";
   history.forEach(h=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${h.time}</td><td>${h.action}</td><td>${h.type}</td><td>${h.strike}</td><td>${h.lots}</td><td>${h.price.toFixed(2)}</td><td style="color:${h.pl>=0?'green':'red'}">${h.pl.toFixed(2)}</td>`;
+    tr.innerHTML=`<td>${h.time}</td><td>${h.action}</td><td>${h.type}</td><td>${h.strike}</td>
+                  <td>${h.lots}</td><td>${h.price.toFixed(2)}</td><td style="color:${h.pl>=0?'green':'red'}">${h.pl.toFixed(2)}</td>`;
     tbody.appendChild(tr);
   });
 }
 function openOrders(){document.getElementById('ordersPopup').style.display='block';}
 function closeOrders(){document.getElementById('ordersPopup').style.display='none';}
 function switchOrdersTab(id,btn){
-  document.querySelectorAll("#ordersTabs button").forEach(b=>b.classList.remove("active")); btn.classList.add("active");
-  document.querySelectorAll(".ordersContent").forEach(c=>c.classList.remove("active")); document.getElementById(id).classList.add("active");
+  document.querySelectorAll("#ordersTabs button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  document.querySelectorAll(".ordersContent").forEach(c=>c.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
 }
 function openDeposit(){document.getElementById('depositModal').style.display='block';}
 function closeDeposit(){document.getElementById('depositModal').style.display='none';}
 function addDeposit(){
-  const amt=parseFloat(document.getElementById('depositAmount').value)||0; if(amt<=0)return;
+  const amt=parseFloat(document.getElementById('depositAmount').value)||0;
+  if(amt<=0)return;
   balance+=amt; updateWallet(); closeDeposit();
 }
 function openHelp(){document.getElementById('helpModal').style.display='block';}
