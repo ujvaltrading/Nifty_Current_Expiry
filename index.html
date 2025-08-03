@@ -13,75 +13,63 @@
   --light: #f4f7fa;
   --shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-body {
-  margin:0; font-family:'Segoe UI',sans-serif; background:var(--light); color:#333;
-}
+body { margin:0; font-family:'Segoe UI',sans-serif; background:var(--light); color:#333; }
 /* Top bar */
 #topBar {
   position:fixed; top:0; left:0; right:0; background:var(--primary); color:#fff;
   display:flex; justify-content:space-between; align-items:center;
   padding:10px 15px; z-index:999;
   box-shadow:var(--shadow);
+  flex-wrap: wrap;
 }
 #topBar span { font-size:14px; }
 #overallPL.positive{color:#a5d6a7;}
 #overallPL.negative{color:#ef9a9a;}
 .container {
-  margin-top:60px; width:100%; max-width:1800px; margin-left:auto; margin-right:auto;
-  background:#fff; border-radius:8px; box-shadow:var(--shadow);
-  overflow:hidden;
+  margin-top:70px; width:100%; max-width:1800px; margin-left:auto; margin-right:auto;
+  background:#fff; border-radius:8px; box-shadow:var(--shadow); overflow:hidden;
 }
 h1 {margin:0; padding:15px; background:var(--primary); color:#fff; font-size:1.5rem; text-align:center;}
 .expiry-date{background:var(--secondary); padding:3px 8px; border-radius:5px; color:#000;}
-.table-wrapper { overflow:auto; max-height:75vh; scroll-behavior:smooth;}
-table { border-collapse:collapse; width:max-content; min-width:100%; }
-th,td { border:1px solid #ddd; padding:8px 10px; text-align:center; white-space:nowrap; font-size:14px;}
-thead tr:first-child th{position:sticky;top:0;z-index:10;background:var(--primary);color:#fff;font-weight:bold;}
-thead tr:nth-child(2) th{position:sticky;top:40px;z-index:9;background:#1565c0;color:#fff;font-size:0.85rem;}
-.call-cell { background:#e3f2fd; }
-.put-cell  { background:#ffebee; }
-.strike-cell{ background:#fff8e1; font-weight:bold; }
-.atm-row {
-  background:linear-gradient(145deg,#ffe082,#ffecb3);
-  box-shadow:inset 0 0 15px rgba(0,0,0,0.25), 0 0 12px rgba(0,0,0,0.4);
-  transform:scale(1.01);
-}
-button.trade-btn{padding:5px 10px;font-size:12px;border:none;cursor:pointer;border-radius:4px;margin:2px;transition:all 0.2s;}
-button.buy-btn{background:#4CAF50;color:#fff;}
-button.sell-btn{background:#f44336;color:#fff;}
-button.buy-btn:hover{opacity:0.9;} button.sell-btn:hover{opacity:0.9;}
+.table-wrapper { overflow-x:auto; max-height:75vh; scroll-behavior:smooth; }
+table { border-collapse:collapse; width:100%; table-layout:auto; }
+th,td { border:1px solid #ddd; padding:4px 6px; text-align:center; white-space:nowrap; font-size:12px; }
+thead tr:first-child th { position:sticky; top:0; z-index:10; background:var(--primary); color:#fff; font-weight:bold; }
+thead tr:nth-child(2) th { position:sticky; top:32px; z-index:9; background:#1565c0; color:#fff; font-size:0.75rem; }
+.call-cell { background:#e3f2fd; } .put-cell { background:#ffebee; } .strike-cell{ background:#fff8e1; font-weight:bold; }
+.atm-row { background:linear-gradient(145deg,#ffe082,#ffecb3); box-shadow:inset 0 0 15px rgba(0,0,0,0.25), 0 0 12px rgba(0,0,0,0.4); transform:scale(1.01); }
+button.trade-btn{padding:3px 6px;font-size:10px;border:none;cursor:pointer;border-radius:4px;margin:2px;transition:all 0.2s;}
+button.buy-btn{background:#4CAF50;color:#fff;} button.sell-btn{background:#f44336;color:#fff;}
+button.buy-btn:hover,button.sell-btn:hover{opacity:0.9;}
 /* Orders Popup */
-#ordersPopup{
-  display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:95%;max-width:650px;background:#fff;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.3);
-  z-index:1000;
-}
+#ordersPopup{ display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:95%;max-width:650px;background:#fff;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.3);z-index:1000;}
 #ordersHeader{background:var(--primary);color:#fff;padding:10px;display:flex;justify-content:space-between;align-items:center;border-radius:8px 8px 0 0;}
-#ordersTabs{display:flex;}
-#ordersTabs button{flex:1;padding:10px;background:#f0f0f0;border:none;cursor:pointer;}
+#ordersTabs{display:flex;} #ordersTabs button{flex:1;padding:10px;background:#f0f0f0;border:none;cursor:pointer;}
 #ordersTabs button.active{background:var(--primary);color:#fff;}
-.ordersContent{display:none;padding:10px;max-height:400px;overflow:auto;}
-.ordersContent.active{display:block;}
-.pt-table{width:100%;border-collapse:collapse;}
-.pt-table th,.pt-table td{border:1px solid #ccc;padding:6px;font-size:13px;text-align:center;}
-.pt-table th{background:#f0f0f0;}
+.ordersContent{display:none;padding:10px;max-height:400px;overflow:auto;} .ordersContent.active{display:block;}
+.pt-table{width:100%;border-collapse:collapse;} .pt-table th,.pt-table td{border:1px solid #ccc;padding:4px;font-size:11px;text-align:center;} .pt-table th{background:#f0f0f0;}
+/* Deposit Modal */
+#depositModal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:20px;z-index:1000;width:90%;max-width:350px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+#depositModal input{width:100%;padding:8px;margin-top:10px;margin-bottom:15px;font-size:14px;}
+#depositModal button{padding:8px 12px;margin-right:5px;}
+/* Lot Modal */
+#lotModal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:20px;z-index:1000;width:90%;max-width:350px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);text-align:center;}
+#lotModal h3{margin-top:0;margin-bottom:10px;color:var(--primary);}
+#lotQty{font-size:20px;margin:0 10px;}
+.lot-btn{background:var(--primary);color:#fff;border:none;padding:5px 12px;font-size:16px;border-radius:4px;cursor:pointer;}
+#requiredAmt{margin-top:10px;font-weight:bold;}
+#confirmTrade{padding:8px 20px;margin-top:15px;border:none;border-radius:4px;font-size:14px;cursor:pointer;}
 /* Help Modal */
-#helpModal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  background:#fff;padding:20px;z-index:1000;width:90%;max-width:400px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
+#helpModal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:20px;z-index:1000;width:90%;max-width:400px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
 #helpModal h3{margin-top:0;}
 /* Floating Help */
-#helpBtn{
-  position:fixed;bottom:15px;right:15px;z-index:999;background:var(--primary);color:#fff;
+#helpBtn{ position:fixed;bottom:15px;right:15px;z-index:999;background:var(--primary);color:#fff;
   padding:10px 15px;border:none;border-radius:50%;box-shadow:var(--shadow);cursor:pointer;
-  font-size:20px;transition:0.3s;
-}
+  font-size:20px;transition:0.3s;}
 #helpBtn:hover{transform:scale(1.1);}
 /* Mobile adjustments */
-@media (max-width: 768px) {
-  table {font-size:12px;}
-  /* Important columns first for mobile quick view */
-  .mobile-priority {order: -1;}
-}
+@media (max-width:768px){ table{font-size:10px;} th,td{padding:2px 4px;font-size:10px;} button.trade-btn{padding:2px 5px;font-size:9px;} }
 footer{background:#f0f0f0;font-size:12px;color:#555;line-height:1.4;padding:10px;text-align:center;}
 </style>
 </head>
@@ -90,7 +78,10 @@ footer{background:#f0f0f0;font-size:12px;color:#555;line-height:1.4;padding:10px
 <div id="topBar">
   <span>Wallet ₹<span id="walletBalance">500000</span></span>
   <span>P&L ₹<span id="overallPL">0.00</span></span>
-  <button id="ordersBtn" onclick="openOrders()">Orders</button>
+  <div>
+    <button id="depositBtn" onclick="openDeposit()">Deposit</button>
+    <button id="ordersBtn" onclick="openOrders()">Orders</button>
+  </div>
 </div>
 
 <div class="container">
@@ -124,12 +115,34 @@ footer{background:#f0f0f0;font-size:12px;color:#555;line-height:1.4;padding:10px
   </div>
 </div>
 
+<!-- Deposit Modal -->
+<div id="depositModal">
+  <h3>Deposit Virtual Money</h3>
+  <input type="number" id="depositAmount" placeholder="Enter amount (₹)" />
+  <div>
+    <button onclick="addDeposit()">Add</button>
+    <button onclick="closeDeposit()">Cancel</button>
+  </div>
+</div>
+
+<!-- Lot Selection Modal -->
+<div id="lotModal">
+  <h3 id="tradeTitle"></h3>
+  <div>
+    <button class="lot-btn" onclick="changeLots(-1)">−</button>
+    <span id="lotQty">1</span>
+    <button class="lot-btn" onclick="changeLots(1)">+</button>
+  </div>
+  <div id="requiredAmt">Required: ₹0</div>
+  <button id="confirmTrade" onclick="confirmTrade()">Confirm</button>
+</div>
+
 <!-- Help Modal -->
 <div id="helpModal">
   <h3>How to Trade (Paper Trading)</h3>
   <p>• Use Buy/Sell buttons near each strike to place orders.<br>
-     • 1 Lot = 75 qty.<br>
-     • Wallet balance is virtual ₹5,00,000.<br>
+     • Choose Lot quantity in popup and see required margin.<br>
+     • Wallet balance is virtual ₹5,00,000 (add more using Deposit).<br>
      • Positions update live as market prices change.<br>
      • Close position button realizes P&L and moves it to history.</p>
   <button onclick="closeHelp()">Close</button>
@@ -144,6 +157,10 @@ footer{background:#f0f0f0;font-size:12px;color:#555;line-height:1.4;padding:10px
 <script>
 const csvUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vSxjT683l5F4vCLWGB7QwO29L4XgawsdEHFG_nGRMs7ZSGeIPM0uJKwVtupbLH7g15rDYVi3pGKxEIJ/pub?gid=1834850132&single=true&output=csv";
 let positions=[],history=[],balance=500000; let firstLoad=true;
+
+// Lot modal variables
+let tradeType="", tradeSide="", tradeStrike=0, tradePrice=0, lotCount=1;
+
 function fmt2(n){return parseFloat(n).toFixed(2);}
 async function fetchData(){
   const res=await fetch(csvUrl); const text=await res.text(); const rows=text.trim().split("\n").map(r=>r.split(","));
@@ -165,25 +182,25 @@ function buildTable(rows){
     const strike=parseFloat(r[6]); const ltpCE=parseFloat(r[4])||0; const ltpPE=parseFloat(r[8])||0;
     const tr=document.createElement("tr");
     tr.innerHTML=`
-      <td class="mobile-priority"><button class="trade-btn buy-btn" onclick="placeOrder('CALL','BUY',${strike},${ltpCE})">Buy</button>
-          <button class="trade-btn sell-btn" onclick="placeOrder('CALL','SELL',${strike},${ltpCE})">Sell</button></td>
+      <td><button class="trade-btn buy-btn" onclick="openLotModal('CALL','BUY',${strike},${ltpCE})">Buy</button>
+          <button class="trade-btn sell-btn" onclick="openLotModal('CALL','SELL',${strike},${ltpCE})">Sell</button></td>
       <td class="call-cell">${r[0]}</td>
       <td class="call-cell">${Number(r[1]||0).toLocaleString()}</td>
       <td class="call-cell">${Number(r[2]||0).toLocaleString()}</td>
       <td class="call-cell">${Number(r[3]||0).toLocaleString()}</td>
       <td class="call-cell">${(parseFloat(r[1])+parseFloat(r[2])||0).toLocaleString()}</td>
-      <td class="call-cell mobile-priority">${fmt2(ltpCE)}</td>
+      <td class="call-cell">${fmt2(ltpCE)}</td>
       <td class="call-cell">${fmt2(parseFloat(r[5])||0)}</td>
-      <td class="strike-cell mobile-priority">${strike}</td>
+      <td class="strike-cell">${strike}</td>
       <td class="put-cell">${fmt2(parseFloat(r[7])||0)}</td>
-      <td class="put-cell mobile-priority">${fmt2(ltpPE)}</td>
+      <td class="put-cell">${fmt2(ltpPE)}</td>
       <td class="put-cell">${(parseFloat(r[11])+parseFloat(r[10])||0).toLocaleString()}</td>
       <td class="put-cell">${Number(r[9]||0).toLocaleString()}</td>
       <td class="put-cell">${Number(r[10]||0).toLocaleString()}</td>
       <td class="put-cell">${Number(r[11]||0).toLocaleString()}</td>
       <td class="put-cell">${r[12]}</td>
-      <td class="mobile-priority"><button class="trade-btn buy-btn" onclick="placeOrder('PUT','BUY',${strike},${ltpPE})">Buy</button>
-          <button class="trade-btn sell-btn" onclick="placeOrder('PUT','SELL',${strike},${ltpPE})">Sell</button></td>`;
+      <td><button class="trade-btn buy-btn" onclick="openLotModal('PUT','BUY',${strike},${ltpPE})">Buy</button>
+          <button class="trade-btn sell-btn" onclick="openLotModal('PUT','SELL',${strike},${ltpPE})">Sell</button></td>`;
     if(i===15) tr.classList.add("atm-row");
     tbody.appendChild(tr);
   });
@@ -192,12 +209,40 @@ function centerATM(){
   const w=document.getElementById("tableWrapper"), r=document.querySelector(".atm-row");
   if(!r) return; w.scrollTop=r.offsetTop-w.clientHeight/2+r.offsetHeight/2;
 }
-function placeOrder(type,side,strike,price){
-  const qty=1; const cost=price*75*qty*(side==='SELL'?1.5:1);
+
+// Lot Modal
+function openLotModal(type,side,strike,price){
+  tradeType=type; tradeSide=side; tradeStrike=strike; tradePrice=price; lotCount=1;
+  document.getElementById('tradeTitle').textContent=`${side} ${type} @ ₹${price}`;
+  document.getElementById('lotQty').textContent=lotCount;
+  updateRequiredAmt();
+  const confirmBtn=document.getElementById('confirmTrade');
+  confirmBtn.style.background = (side==='BUY') ? "#4CAF50" : "#f44336";
+  document.getElementById('lotModal').style.display='block';
+}
+function changeLots(delta){
+  lotCount=Math.max(1,lotCount+delta);
+  document.getElementById('lotQty').textContent=lotCount;
+  updateRequiredAmt();
+}
+function updateRequiredAmt(){
+  const cost = tradePrice*75*lotCount*(tradeSide==='SELL'?1.5:1);
+  document.getElementById('requiredAmt').textContent=`Required: ₹${cost.toFixed(2)}`;
+}
+function confirmTrade(){
+  const cost = tradePrice*75*lotCount*(tradeSide==='SELL'?1.5:1);
   if(cost>balance){alert("Insufficient Wallet Balance");return;}
-  balance-=cost;
-  positions.push({type,side,strike,qty,avgPrice:price});
-  history.push({time:new Date().toLocaleTimeString(),action:side,type,strike,lots:qty,price,pl:0});
+  placeOrder(tradeType,tradeSide,tradeStrike,tradePrice,lotCount);
+  closeLotModal();
+}
+function closeLotModal(){document.getElementById('lotModal').style.display='none';}
+
+// Place Order
+function placeOrder(type,side,strike,price,lots){
+  const cost = price*75*lots*(side==='SELL'?1.5:1);
+  balance -= cost;
+  positions.push({type,side,strike,qty:lots,avgPrice:price});
+  history.push({time:new Date().toLocaleTimeString(),action:side,type,strike,lots,price,pl:0});
   updateWallet(); renderPositions(); renderHistory();
 }
 function updateWallet(){document.getElementById('walletBalance').textContent=balance.toFixed(2);}
@@ -239,6 +284,17 @@ function getLTP(type,strike){
   } return null;
 }
 setInterval(()=>{renderPositions();},1000);
+
+// Deposit Modal
+function openDeposit(){document.getElementById('depositModal').style.display='block';}
+function closeDeposit(){document.getElementById('depositModal').style.display='none';}
+function addDeposit(){
+  const amt=parseFloat(document.getElementById('depositAmount').value)||0;
+  if(amt>0){balance+=amt; updateWallet();}
+  closeDeposit();
+}
+
+// Orders / Help
 function openOrders(){document.getElementById('ordersPopup').style.display='block';}
 function closeOrders(){document.getElementById('ordersPopup').style.display='none';}
 function switchOrdersTab(tab,btn){
@@ -249,6 +305,7 @@ function switchOrdersTab(tab,btn){
 }
 function openHelp(){document.getElementById('helpModal').style.display='block';}
 function closeHelp(){document.getElementById('helpModal').style.display='none';}
+
 fetchData(); setInterval(fetchData,6000);
 </script>
 </body>
